@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -21,9 +23,9 @@ android {
 
         val localProps = rootProject.file("local.properties")
         val props = if (localProps.exists()) {
-            java.util.Properties().apply { load(localProps.inputStream()) }
+            Properties().apply { load(localProps.inputStream()) }
         } else {
-            java.util.Properties()
+            Properties()
         }
         buildConfigField("String", "GNEWS_API_KEY", "\"${props.getProperty("GNEWS_API_KEY", "")}\"")
         buildConfigField("String", "NEWSAPI_KEY", "\"${props.getProperty("NEWSAPI_KEY", "")}\"")
