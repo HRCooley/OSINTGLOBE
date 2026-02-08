@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GlobeNews</title>
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.124/Build/Cesium/Cesium.js"></script>
+    <link href="https://cesium.com/downloads/cesiumjs/releases/1.124/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+    <style>
+        html, body, #cesiumContainer {
+            width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
+            background: #000;
+        }
+        .cesium-viewer-bottom, .cesium-viewer-toolbar,
+        .cesium-viewer-animationContainer, .cesium-viewer-timelineContainer,
+        .cesium-viewer-fullscreenContainer, .cesium-viewer-infoBoxContainer,
+        .cesium-viewer-selectionIndicatorContainer, .cesium-viewer-geocoderContainer,
+        .cesium-viewer-navigationHelpButtonContainer {
+            display: none !important;
+        }
+        .cesium-credit-logoContainer, .cesium-credit-expand-link,
+        .cesium-credit-textContainer { display: none !important; }
+    </style>
+</head>
+<body>
+<div id="cesiumContainer"></div>
+<script>
+    // Scope colors
+    const SCOPE_COLORS = {
+        'INTERNATIONAL': Cesium.Color.fromCssColorString('#ff4444').withAlpha(0.9),
+        'NATIONAL': Cesium.Color.fromCssColorString('#ff9944').withAlpha(0.9),
+        'REGIONAL': Cesium.Color.fromCssColorString('#4488ff').withAlpha(0.9),
+        'LOCAL': Cesium.Color.fromCssColorString('#4488ff').withAlpha(0.9)
+    };
+
+    let viewer = null;
+    let markers = {};
+    let cameraMoveTimeout = null;
+    let isReady = false;
+
+    function initViewer(ionToken) {
+        if (ionToken && ionToken.length > 0) {
+            Cesium.Ion.defaultAccessToken = ionToken;
+        }
+
+        viewer = new Cesium.Viewer('cesiumContainer', {
+            baseLayerPicker: false,
+            geocoder: false,
+            homeButton: false,
+            infoBox: false,
+            sceneModePicker: false,
+            selectionIndicator: false,
+            timeline: false,
+            animation: false,
+            navigationHelpButton: false,
+            fullscreenButton: false,
+            vrButton: false,
+            scene3DOnly: true,
+            skyBox: false,
+            skyAtmosphere: new Cesium.SkyAtmosphere(),
+            requestRenderMode: false,
+            maximumRenderTimeChange: Infinity
+        });
+
+        // Dark base layer
+        try {
+            viewer.imageryLayers.removeAll();
+            viewer.imageryLayers.addImageryProvider(
+                new Cesium.UrlTemplateImageryProvider({
+                    url: 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+                    credit: 'CartoDB',
+                    maximumLevel: 18
+                })
+            );
+        } catch (e) {
+            console.error('Failed to set dark layer:', e);
+        }
+
+        // Disable terrain
+        viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
+
+        // Enable lighting for day/night terminator
+        viewer.scene.globe.enableLighting = true;
+        viewer.scene.globe.showGroundAtmosphere = true;
+
+        // Entity clustering
+        viewer.dataSourceDisplay.defaultDataSource.clustering.enabled = true;
+        viewer.dataSourceDisplay.defaultDataSource.clustering.pixelRange = 40;
+        viewer.dataSourceDisplay.defaultDataSource.clustering.minimumClusterSize = 3;
+
+        // Background color
+        viewer.scene.backgroundColor = Cesium.Color.BLACK;
+        viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#1a1a2e');
+
+        // Camera move listener
+        viewer.camera.moveEnd.addEventListener(function() {
+            if (cameraMoveTimeout) clearTimeout(cameraMoveTimeout);
+            cameraMoveTimeout = setTimeout(function() {
+                var viewJson = getCurrentView();
+                if (typeof AndroidBridge !== 'undefined') {
+                    AndroidBridge.onCameraMove(viewJson);
+                }
+            }, 400);
+        });
+
+        // Click handler for markers
+        var handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+        handler.setInputAction(function(click) {
+            var pickedObject = viewer.scene.pick(click.position);
+            if (Cesium.defined(pickedObject) && pickedObject.id && pickedObject.id.storyId) {
+                if (typeof AndroidBridge !== 'undefined') {
+                    AndroidBridge.onMarkerTap(pickedObject.id.storyId);
+                }
+            }
+        }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+        isReady = true;
+        if (typeof AndroidBridge !== 'undefined') {
+            AndroidBridge.onReady();
+        }
+    }
+
+    function addMarkers(jsonArrayString) {
+        if (!viewer) return;
+        try {
+            var items = JSON.parse(jsonArrayString);
+            var altitude = viewer.camera.positionCartographic.height / 1000;
+
+            items.forEach(function(item) {
+                if (markers[item.id]) {
+                    viewer.entities.remove(markers[item.id]);
+                }
+
+                var color = SCOPE_COLORS[item.scope] || SCOPE_COLORS['NATIONAL'];
+                var hoursAgo = (Date.now() - (item.publishedAt || Date.now())) / 3600000;
+                var size = hoursAgo < 6 ? 12 : (hoursAgo < 24 ? 9 : 7);
+
+                if (altitude > 15000) {
+                    size = 6;
+                } else if (altitude < 500) {
+                    size = 14;
+                }
+
+                var entity = viewer.entities.add({
+                    position: Cesium.Cartesian3.fromDegrees(item.lon, item.lat),
+                    point: {
+                        pixelSize: size,
+                        color: color,
+                        outlineColor: Cesium.Color.WHITE.withAlpha(0.5),
+                        outlineWidth: 1,
+                        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+                        disableDepthTestDistance: Number.POSITIVE_INFINITY
+                    },
+                    label: altitude < 500 ? {
+                        text: item.title ? item.title.substring(0, 40) : '',
+                        font: '11px sans-serif',
+                        fillColor: Cesium.Color.WHITE,
+                        outlineColor: Cesium.Color.BLACK,
+                        outlineWidth: 2,
+                        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                        pixelOffset: new Cesium.Cartesian2(0, -16),
+                        disableDepthTestDistance: Number.POSITIVE_INFINITY,
+                        showBackground: true,
+                        backgroundColor: Cesium.Color.fromCssColorString('rgba(0,0,0,0.7)')
+                    } : undefined
+                });
+
+                entity.storyId = item.id;
+                markers[item.id] = entity;
+            });
+        } catch (e) {
+            console.error('addMarkers error:', e);
+        }
+    }
+
+    function clearMarkers() {
+        if (!viewer) return;
+        Object.keys(markers).forEach(function(id) {
+            viewer.entities.remove(markers[id]);
+        });
+        markers = {};
+    }
+
+    function flyTo(lat, lon, altitudeKm) {
+        if (!viewer) return;
+        viewer.camera.flyTo({
+            destination: Cesium.Cartesian3.fromDegrees(lon, lat, altitudeKm * 1000),
+            duration: 2.0
+        });
+    }
+
+    function getCurrentView() {
+        if (!viewer) return '{}';
+        var cartographic = viewer.camera.positionCartographic;
+        var lat = Cesium.Math.toDegrees(cartographic.latitude);
+        var lon = Cesium.Math.toDegrees(cartographic.longitude);
+        var altitude = cartographic.height / 1000;
+
+        var rect = viewer.camera.computeViewRectangle();
+        var bounds = {};
+        if (rect) {
+            bounds = {
+                north: Cesium.Math.toDegrees(rect.north),
+                south: Cesium.Math.toDegrees(rect.south),
+                east: Cesium.Math.toDegrees(rect.east),
+                west: Cesium.Math.toDegrees(rect.west)
+            };
+        } else {
+            bounds = {
+                north: Math.min(lat + 30, 90),
+                south: Math.max(lat - 30, -90),
+                east: Math.min(lon + 60, 180),
+                west: Math.max(lon - 60, -180)
+            };
+        }
+
+        return JSON.stringify({
+            lat: lat,
+            lon: lon,
+            altitude: altitude,
+            bounds: bounds
+        });
+    }
+
+    function setBaseLayer(providerName) {
+        if (!viewer) return;
+        viewer.imageryLayers.removeAll();
+
+        var provider;
+        switch (providerName) {
+            case 'satellite':
+                if (Cesium.Ion.defaultAccessToken) {
+                    provider = Cesium.IonImageryProvider.fromAssetId(2);
+                } else {
+                    provider = new Cesium.UrlTemplateImageryProvider({
+                        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                        maximumLevel: 18
+                    });
+                }
+                break;
+            case 'streets':
+                provider = new Cesium.UrlTemplateImageryProvider({
+                    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    credit: 'OpenStreetMap',
+                    maximumLevel: 18
+                });
+                break;
+            case 'dark':
+            default:
+                provider = new Cesium.UrlTemplateImageryProvider({
+                    url: 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+                    credit: 'CartoDB',
+                    maximumLevel: 18
+                });
+                break;
+        }
+
+        if (provider instanceof Promise) {
+            provider.then(function(p) { viewer.imageryLayers.addImageryProvider(p); });
+        } else {
+            viewer.imageryLayers.addImageryProvider(provider);
+        }
+    }
+
+    function highlightMarker(id) {
+        if (!viewer || !markers[id]) return;
+        var entity = markers[id];
+        if (entity.point) {
+            var originalSize = entity.point.pixelSize.getValue();
+            var pulseCount = 0;
+            var pulseInterval = setInterval(function() {
+                entity.point.pixelSize = (pulseCount % 2 === 0) ? originalSize * 1.8 : originalSize;
+                entity.point.outlineWidth = (pulseCount % 2 === 0) ? 3 : 1;
+                pulseCount++;
+                if (pulseCount >= 6) {
+                    clearInterval(pulseInterval);
+                    entity.point.pixelSize = originalSize;
+                    entity.point.outlineWidth = 1;
+                }
+            }, 300);
+        }
+    }
+
+    // Initialize on load
+    window.addEventListener('load', function() {
+        var token = '';
+        if (typeof AndroidBridge !== 'undefined' && AndroidBridge.getCesiumToken) {
+            token = AndroidBridge.getCesiumToken();
+        }
+        initViewer(token);
+    });
+</script>
+</body>
+</html>
