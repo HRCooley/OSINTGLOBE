@@ -103,6 +103,8 @@ dependencies {
 
     // Background work
     implementation(libs.work.runtime)
+    implementation(libs.hilt.work)
+    ksp(libs.hilt.work.compiler)
 
     // Coroutines
     implementation(libs.coroutines.core)
