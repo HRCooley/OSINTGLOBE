@@ -1,0 +1,497 @@
+[
+  {
+    "name": "BBC News - World",
+    "url": "https://feeds.bbci.co.uk/news/world/rss.xml",
+    "country": "United Kingdom",
+    "language": "en",
+    "lat": 51.5074,
+    "lon": -0.1278,
+    "scope": "INTERNATIONAL"
+  },
+  {
+    "name": "Reuters - World",
+    "url": "https://www.reutersagency.com/feed/?best-topics=world&post_type=best",
+    "country": "United Kingdom",
+    "language": "en",
+    "lat": 51.5133,
+    "lon": -0.0886,
+    "scope": "INTERNATIONAL"
+  },
+  {
+    "name": "The Guardian - World",
+    "url": "https://www.theguardian.com/world/rss",
+    "country": "United Kingdom",
+    "language": "en",
+    "lat": 51.5343,
+    "lon": -0.1227,
+    "scope": "INTERNATIONAL"
+  },
+  {
+    "name": "CNN - Top Stories",
+    "url": "http://rss.cnn.com/rss/edition.rss",
+    "country": "United States",
+    "language": "en",
+    "lat": 33.7490,
+    "lon": -84.3880,
+    "scope": "INTERNATIONAL"
+  },
+  {
+    "name": "NPR - World",
+    "url": "https://feeds.npr.org/1004/rss.xml",
+    "country": "United States",
+    "language": "en",
+    "lat": 38.8929,
+    "lon": -77.0252,
+    "scope": "INTERNATIONAL"
+  },
+  {
+    "name": "Al Jazeera English",
+    "url": "https://www.aljazeera.com/xml/rss/all.xml",
+    "country": "Qatar",
+    "language": "en",
+    "lat": 25.3136,
+    "lon": 51.5310,
+    "scope": "INTERNATIONAL"
+  },
+  {
+    "name": "NHK World - Japan",
+    "url": "https://www3.nhk.or.jp/rss/news/cat0.xml",
+    "country": "Japan",
+    "language": "ja",
+    "lat": 35.6762,
+    "lon": 139.6503,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "France 24 - English",
+    "url": "https://www.france24.com/en/rss",
+    "country": "France",
+    "language": "en",
+    "lat": 48.8331,
+    "lon": 2.3264,
+    "scope": "INTERNATIONAL"
+  },
+  {
+    "name": "Deutsche Welle - World",
+    "url": "https://rss.dw.com/rdf/rss-en-world",
+    "country": "Germany",
+    "language": "en",
+    "lat": 50.7339,
+    "lon": 7.0999,
+    "scope": "INTERNATIONAL"
+  },
+  {
+    "name": "Times of India",
+    "url": "https://timesofindia.indiatimes.com/rssfeedstopstories.cms",
+    "country": "India",
+    "language": "en",
+    "lat": 19.0760,
+    "lon": 72.8777,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "The Hindu",
+    "url": "https://www.thehindu.com/news/feeder/default.rss",
+    "country": "India",
+    "language": "en",
+    "lat": 13.0827,
+    "lon": 80.2707,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Xinhua News Agency",
+    "url": "http://www.xinhuanet.com/english/rss/worldrss.xml",
+    "country": "China",
+    "language": "zh",
+    "lat": 39.9042,
+    "lon": 116.4074,
+    "scope": "INTERNATIONAL"
+  },
+  {
+    "name": "South China Morning Post",
+    "url": "https://www.scmp.com/rss/91/feed",
+    "country": "Hong Kong",
+    "language": "en",
+    "lat": 22.3193,
+    "lon": 114.1694,
+    "scope": "INTERNATIONAL"
+  },
+  {
+    "name": "ABC Australia - Top Stories",
+    "url": "https://www.abc.net.au/news/feed/2942460/rss.xml",
+    "country": "Australia",
+    "language": "en",
+    "lat": -33.8437,
+    "lon": 151.2065,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Daily Nation - Kenya",
+    "url": "https://nation.africa/kenya/rss.xml",
+    "country": "Kenya",
+    "language": "en",
+    "lat": -1.2921,
+    "lon": 36.8219,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "New York Times - World",
+    "url": "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
+    "country": "United States",
+    "language": "en",
+    "lat": 40.7561,
+    "lon": -73.9903,
+    "scope": "INTERNATIONAL"
+  },
+  {
+    "name": "Washington Post - World",
+    "url": "https://feeds.washingtonpost.com/rss/world",
+    "country": "United States",
+    "language": "en",
+    "lat": 38.9048,
+    "lon": -77.0325,
+    "scope": "INTERNATIONAL"
+  },
+  {
+    "name": "Associated Press - Top News",
+    "url": "https://rsshub.app/apnews/topics/apf-topnews",
+    "country": "United States",
+    "language": "en",
+    "lat": 40.7484,
+    "lon": -73.9857,
+    "scope": "INTERNATIONAL"
+  },
+  {
+    "name": "CBC News - World",
+    "url": "https://www.cbc.ca/webfeed/rss/rss-world",
+    "country": "Canada",
+    "language": "en",
+    "lat": 43.6426,
+    "lon": -79.3871,
+    "scope": "INTERNATIONAL"
+  },
+  {
+    "name": "Globe and Mail - World",
+    "url": "https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/world/",
+    "country": "Canada",
+    "language": "en",
+    "lat": 43.6510,
+    "lon": -79.3725,
+    "scope": "INTERNATIONAL"
+  },
+  {
+    "name": "Mexico News Daily",
+    "url": "https://mexiconewsdaily.com/feed/",
+    "country": "Mexico",
+    "language": "en",
+    "lat": 19.4326,
+    "lon": -99.1332,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Los Angeles Times - World",
+    "url": "https://www.latimes.com/world-nation/rss2.0.xml",
+    "country": "United States",
+    "language": "en",
+    "lat": 34.0459,
+    "lon": -118.2468,
+    "scope": "INTERNATIONAL"
+  },
+  {
+    "name": "Chicago Tribune - Nation & World",
+    "url": "https://www.chicagotribune.com/arcio/rss/category/nation-world/",
+    "country": "United States",
+    "language": "en",
+    "lat": 41.8827,
+    "lon": -87.6233,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Miami Herald",
+    "url": "https://www.miamiherald.com/news/nation-world/index.rss",
+    "country": "United States",
+    "language": "en",
+    "lat": 25.7617,
+    "lon": -80.1918,
+    "scope": "REGIONAL"
+  },
+  {
+    "name": "Buenos Aires Times",
+    "url": "https://www.batimes.com.ar/feed",
+    "country": "Argentina",
+    "language": "en",
+    "lat": -34.6037,
+    "lon": -58.3816,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Folha de S.Paulo",
+    "url": "https://feeds.folha.uol.com.br/mundo/rss091.xml",
+    "country": "Brazil",
+    "language": "pt",
+    "lat": -23.5505,
+    "lon": -46.6333,
+    "scope": "INTERNATIONAL"
+  },
+  {
+    "name": "El Tiempo - Colombia",
+    "url": "https://www.eltiempo.com/rss/mundo.xml",
+    "country": "Colombia",
+    "language": "es",
+    "lat": 4.7110,
+    "lon": -74.0721,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "El Mercurio - Chile",
+    "url": "https://www.emol.com/rss/rss.asp",
+    "country": "Chile",
+    "language": "es",
+    "lat": -33.4489,
+    "lon": -70.6693,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "El Universal - Venezuela",
+    "url": "https://www.eluniversal.com/rss/",
+    "country": "Venezuela",
+    "language": "es",
+    "lat": 10.4806,
+    "lon": -66.9036,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "El Comercio - Peru",
+    "url": "https://elcomercio.pe/arcio/rss/",
+    "country": "Peru",
+    "language": "es",
+    "lat": -12.0464,
+    "lon": -77.0428,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Der Spiegel - International",
+    "url": "https://www.spiegel.de/international/index.rss",
+    "country": "Germany",
+    "language": "en",
+    "lat": 53.5511,
+    "lon": 9.9937,
+    "scope": "INTERNATIONAL"
+  },
+  {
+    "name": "Le Monde",
+    "url": "https://www.lemonde.fr/international/rss_full.xml",
+    "country": "France",
+    "language": "fr",
+    "lat": 48.8534,
+    "lon": 2.3452,
+    "scope": "INTERNATIONAL"
+  },
+  {
+    "name": "ANSA - Italy",
+    "url": "https://www.ansa.it/sito/ansait_rss.xml",
+    "country": "Italy",
+    "language": "it",
+    "lat": 41.9028,
+    "lon": 12.4964,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "El Pais - International",
+    "url": "https://feeds.elpais.com/mrss-s/pages/ep/site/english.elpais.com/portada",
+    "country": "Spain",
+    "language": "es",
+    "lat": 40.4168,
+    "lon": -3.7038,
+    "scope": "INTERNATIONAL"
+  },
+  {
+    "name": "RTE News - Ireland",
+    "url": "https://www.rte.ie/feeds/rss/?index=/news/world/",
+    "country": "Ireland",
+    "language": "en",
+    "lat": 53.3331,
+    "lon": -6.2489,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Aftenposten - Norway",
+    "url": "https://www.aftenposten.no/rss/nyheter",
+    "country": "Norway",
+    "language": "no",
+    "lat": 59.9139,
+    "lon": 10.7522,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "The Moscow Times",
+    "url": "https://www.themoscowtimes.com/rss/news",
+    "country": "Russia",
+    "language": "en",
+    "lat": 55.7558,
+    "lon": 37.6173,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Politiken - Denmark",
+    "url": "https://politiken.dk/rss/senestenyt.rss",
+    "country": "Denmark",
+    "language": "da",
+    "lat": 55.6761,
+    "lon": 12.5683,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Euronews",
+    "url": "https://www.euronews.com/rss?level=theme&name=news",
+    "country": "France",
+    "language": "en",
+    "lat": 45.7640,
+    "lon": 4.8357,
+    "scope": "INTERNATIONAL"
+  },
+  {
+    "name": "Swiss Info",
+    "url": "https://www.swissinfo.ch/eng/rss/world",
+    "country": "Switzerland",
+    "language": "en",
+    "lat": 46.9480,
+    "lon": 7.4474,
+    "scope": "INTERNATIONAL"
+  },
+  {
+    "name": "Polish Radio - English",
+    "url": "https://www.polskieradio.pl/395/rss",
+    "country": "Poland",
+    "language": "en",
+    "lat": 52.2297,
+    "lon": 21.0122,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Sahara Reporters - Nigeria",
+    "url": "https://saharareporters.com/articles/rss-feed",
+    "country": "Nigeria",
+    "language": "en",
+    "lat": 6.5244,
+    "lon": 3.3792,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Mail & Guardian - South Africa",
+    "url": "https://mg.co.za/feed/",
+    "country": "South Africa",
+    "language": "en",
+    "lat": -26.2041,
+    "lon": 28.0473,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "The East African",
+    "url": "https://www.theeastafrican.co.ke/tea/rss.xml",
+    "country": "Kenya",
+    "language": "en",
+    "lat": -1.2864,
+    "lon": 36.8172,
+    "scope": "REGIONAL"
+  },
+  {
+    "name": "Egyptian Streets",
+    "url": "https://egyptianstreets.com/feed/",
+    "country": "Egypt",
+    "language": "en",
+    "lat": 30.0444,
+    "lon": 31.2357,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Ghana Web",
+    "url": "https://www.ghanaweb.com/GhanaHomePage/NewsArchive/rss.xml",
+    "country": "Ghana",
+    "language": "en",
+    "lat": 5.6037,
+    "lon": -0.1870,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "The Korea Herald",
+    "url": "http://www.koreaherald.com/common/rss_xml.php?ct=102",
+    "country": "South Korea",
+    "language": "en",
+    "lat": 37.5665,
+    "lon": 126.9780,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "The Straits Times - Asia",
+    "url": "https://www.straitstimes.com/news/asia/rss.xml",
+    "country": "Singapore",
+    "language": "en",
+    "lat": 1.3521,
+    "lon": 103.8198,
+    "scope": "REGIONAL"
+  },
+  {
+    "name": "Dawn - Pakistan",
+    "url": "https://www.dawn.com/feed",
+    "country": "Pakistan",
+    "language": "en",
+    "lat": 24.8607,
+    "lon": 67.0011,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Yomiuri Shimbun - Japan",
+    "url": "https://www.yomiuri.co.jp/feed/",
+    "country": "Japan",
+    "language": "ja",
+    "lat": 35.6870,
+    "lon": 139.7537,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Haaretz - Israel",
+    "url": "https://www.haaretz.com/cmlink/1.628765",
+    "country": "Israel",
+    "language": "en",
+    "lat": 32.0853,
+    "lon": 34.7818,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "The Daily Star - Lebanon",
+    "url": "https://www.dailystar.com.lb/RSS.aspx?live=1",
+    "country": "Lebanon",
+    "language": "en",
+    "lat": 33.8938,
+    "lon": 35.5018,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Arab News - Saudi Arabia",
+    "url": "https://www.arabnews.com/rss.xml",
+    "country": "Saudi Arabia",
+    "language": "en",
+    "lat": 21.4858,
+    "lon": 39.1925,
+    "scope": "REGIONAL"
+  },
+  {
+    "name": "New Zealand Herald",
+    "url": "https://www.nzherald.co.nz/arc/outboundfeeds/rss/curated/78/?outputType=xml",
+    "country": "New Zealand",
+    "language": "en",
+    "lat": -36.8485,
+    "lon": 174.7633,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "RNZ - Radio New Zealand",
+    "url": "https://www.rnz.co.nz/rss/world.xml",
+    "country": "New Zealand",
+    "language": "en",
+    "lat": -41.2865,
+    "lon": 174.7762,
+    "scope": "INTERNATIONAL"
+  }
+]
