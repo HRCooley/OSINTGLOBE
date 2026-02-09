@@ -1,19 +1,23 @@
 package com.globenews.presentation.globe
 
 import android.webkit.WebView
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -45,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.globenews.domain.model.EditorialScope
 import com.globenews.domain.model.NewsCategory
+import com.globenews.domain.model.NewsStory
 import com.globenews.presentation.search.SearchBar
 import com.globenews.presentation.storydetail.StoryDetailSheet
 
@@ -163,6 +168,14 @@ fun GlobeScreen(
                 strokeWidth = 2.dp
             )
         }
+
+        // Story count badge (top-right, below top bar)
+        StoryCountBadge(
+            stories = uiState.stories,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 96.dp, end = 12.dp)
+        )
 
         // Category filter chips (horizontally scrollable)
         CategoryChips(
@@ -313,6 +326,91 @@ private fun LayerToggle(
                     .clickable { onLayerChange(id) }
                     .padding(horizontal = 8.dp, vertical = 4.dp)
             )
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun StoryCountBadge(
+    stories: List<NewsStory>,
+    modifier: Modifier = Modifier
+) {
+    var showBreakdown by remember { mutableStateOf(false) }
+    val count = stories.size
+
+    Column(modifier = modifier, horizontalAlignment = Alignment.End) {
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color.Black.copy(alpha = 0.6f))
+                .combinedClickable(
+                    onClick = { },
+                    onLongClick = { showBreakdown = !showBreakdown }
+                )
+                .padding(horizontal = 10.dp, vertical = 6.dp)
+        ) {
+            if (count > 0) {
+                Text(
+                    text = "$count stories in view",
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelSmall
+                )
+            } else {
+                Text(
+                    text = "No stories found",
+                    color = Color.White.copy(alpha = 0.7f),
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+        }
+
+        // Source breakdown popup on long-press
+        if (showBreakdown && count > 0) {
+            val breakdown = stories
+                .flatMap { it.sources }
+                .groupingBy { it.providerApi }
+                .eachCount()
+                .toList()
+                .sortedByDescending { it.second }
+
+            val providerLabels = mapOf(
+                "gdelt" to "GDELT",
+                "gnews" to "GNews",
+                "newsapi" to "NewsAPI",
+                "rss" to "RSS Feeds",
+                "google_rss" to "Google News"
+            )
+
+            Column(
+                modifier = Modifier
+                    .padding(top = 4.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color.Black.copy(alpha = 0.8f))
+                    .padding(horizontal = 10.dp, vertical = 8.dp)
+            ) {
+                Text(
+                    text = "Source breakdown",
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelSmall
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                breakdown.forEach { (provider, provCount) ->
+                    Row {
+                        Text(
+                            text = providerLabels[provider] ?: provider,
+                            color = Color.White.copy(alpha = 0.8f),
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "$provCount",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
+                }
+            }
         }
     }
 }
