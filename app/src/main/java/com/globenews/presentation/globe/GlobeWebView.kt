@@ -1,8 +1,11 @@
 package com.globenews.presentation.globe
 
 import android.annotation.SuppressLint
+import android.util.Log
 import android.view.ViewGroup
+import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
+import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -75,9 +78,27 @@ fun GlobeWebView(
 
                 addJavascriptInterface(bridge, "AndroidBridge")
 
+                webChromeClient = object : WebChromeClient() {
+                    override fun onConsoleMessage(msg: ConsoleMessage?): Boolean {
+                        msg?.let {
+                            Log.d("GlobeWebView", "${it.messageLevel()}: ${it.message()} [${it.sourceId()}:${it.lineNumber()}]")
+                        }
+                        return true
+                    }
+                }
+
                 webViewClient = object : WebViewClient() {
                     override fun onPageFinished(view: WebView?, url: String?) {
                         super.onPageFinished(view, url)
+                    }
+
+                    override fun onReceivedError(
+                        view: WebView?,
+                        errorCode: Int,
+                        description: String?,
+                        failingUrl: String?
+                    ) {
+                        Log.e("GlobeWebView", "Error $errorCode: $description ($failingUrl)")
                     }
                 }
 

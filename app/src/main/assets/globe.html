@@ -39,84 +39,87 @@
     let isReady = false;
 
     function initViewer(ionToken) {
-        if (ionToken && ionToken.length > 0) {
-            Cesium.Ion.defaultAccessToken = ionToken;
-        }
-
-        viewer = new Cesium.Viewer('cesiumContainer', {
-            baseLayerPicker: false,
-            geocoder: false,
-            homeButton: false,
-            infoBox: false,
-            sceneModePicker: false,
-            selectionIndicator: false,
-            timeline: false,
-            animation: false,
-            navigationHelpButton: false,
-            fullscreenButton: false,
-            vrButton: false,
-            scene3DOnly: true,
-            skyBox: false,
-            skyAtmosphere: new Cesium.SkyAtmosphere(),
-            requestRenderMode: false,
-            maximumRenderTimeChange: Infinity
-        });
-
-        // Dark base layer
         try {
-            viewer.imageryLayers.removeAll();
-            viewer.imageryLayers.addImageryProvider(
+            if (ionToken && ionToken.length > 0) {
+                Cesium.Ion.defaultAccessToken = ionToken;
+            }
+
+            // Create dark base layer up front
+            var darkLayer = new Cesium.ImageryLayer(
                 new Cesium.UrlTemplateImageryProvider({
                     url: 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
                     credit: 'CartoDB',
                     maximumLevel: 18
                 })
             );
-        } catch (e) {
-            console.error('Failed to set dark layer:', e);
-        }
 
-        // Disable terrain
-        viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
+            viewer = new Cesium.Viewer('cesiumContainer', {
+                baseLayer: darkLayer,
+                baseLayerPicker: false,
+                geocoder: false,
+                homeButton: false,
+                infoBox: false,
+                sceneModePicker: false,
+                selectionIndicator: false,
+                timeline: false,
+                animation: false,
+                navigationHelpButton: false,
+                fullscreenButton: false,
+                vrButton: false,
+                scene3DOnly: true,
+                skyBox: false,
+                skyAtmosphere: new Cesium.SkyAtmosphere(),
+                requestRenderMode: false,
+                maximumRenderTimeChange: Infinity
+            });
 
-        // Enable lighting for day/night terminator
-        viewer.scene.globe.enableLighting = true;
-        viewer.scene.globe.showGroundAtmosphere = true;
+            // Disable terrain
+            viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
 
-        // Entity clustering
-        viewer.dataSourceDisplay.defaultDataSource.clustering.enabled = true;
-        viewer.dataSourceDisplay.defaultDataSource.clustering.pixelRange = 40;
-        viewer.dataSourceDisplay.defaultDataSource.clustering.minimumClusterSize = 3;
+            // Enable lighting for day/night terminator
+            viewer.scene.globe.enableLighting = true;
+            viewer.scene.globe.showGroundAtmosphere = true;
 
-        // Background color
-        viewer.scene.backgroundColor = Cesium.Color.BLACK;
-        viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#1a1a2e');
+            // Entity clustering
+            viewer.dataSourceDisplay.defaultDataSource.clustering.enabled = true;
+            viewer.dataSourceDisplay.defaultDataSource.clustering.pixelRange = 40;
+            viewer.dataSourceDisplay.defaultDataSource.clustering.minimumClusterSize = 3;
 
-        // Camera move listener
-        viewer.camera.moveEnd.addEventListener(function() {
-            if (cameraMoveTimeout) clearTimeout(cameraMoveTimeout);
-            cameraMoveTimeout = setTimeout(function() {
-                var viewJson = getCurrentView();
-                if (typeof AndroidBridge !== 'undefined') {
-                    AndroidBridge.onCameraMove(viewJson);
+            // Background color
+            viewer.scene.backgroundColor = Cesium.Color.BLACK;
+            viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#1a1a2e');
+
+            // Camera move listener
+            viewer.camera.moveEnd.addEventListener(function() {
+                if (cameraMoveTimeout) clearTimeout(cameraMoveTimeout);
+                cameraMoveTimeout = setTimeout(function() {
+                    var viewJson = getCurrentView();
+                    if (typeof AndroidBridge !== 'undefined') {
+                        AndroidBridge.onCameraMove(viewJson);
+                    }
+                }, 400);
+            });
+
+            // Click handler for markers
+            var handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+            handler.setInputAction(function(click) {
+                var pickedObject = viewer.scene.pick(click.position);
+                if (Cesium.defined(pickedObject) && pickedObject.id && pickedObject.id.storyId) {
+                    if (typeof AndroidBridge !== 'undefined') {
+                        AndroidBridge.onMarkerTap(pickedObject.id.storyId);
+                    }
                 }
-            }, 400);
-        });
+            }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
-        // Click handler for markers
-        var handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
-        handler.setInputAction(function(click) {
-            var pickedObject = viewer.scene.pick(click.position);
-            if (Cesium.defined(pickedObject) && pickedObject.id && pickedObject.id.storyId) {
-                if (typeof AndroidBridge !== 'undefined') {
-                    AndroidBridge.onMarkerTap(pickedObject.id.storyId);
-                }
+            isReady = true;
+            if (typeof AndroidBridge !== 'undefined') {
+                AndroidBridge.onReady();
             }
-        }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
-
-        isReady = true;
-        if (typeof AndroidBridge !== 'undefined') {
-            AndroidBridge.onReady();
+        } catch (e) {
+            console.error('initViewer failed:', e);
+            document.getElementById('cesiumContainer').innerHTML =
+                '<p style="color:#ff4444;padding:20px;font-family:sans-serif;">' +
+                'Globe failed to load: ' + e.message + '</p>';
         }
     }
 
@@ -231,13 +234,26 @@
         switch (providerName) {
             case 'satellite':
                 if (Cesium.Ion.defaultAccessToken) {
-                    provider = Cesium.IonImageryProvider.fromAssetId(2);
-                } else {
-                    provider = new Cesium.UrlTemplateImageryProvider({
-                        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-                        maximumLevel: 18
-                    });
+                    try {
+                        var ionPromise = Cesium.IonImageryProvider.fromAssetId(2);
+                        ionPromise.then(function(p) {
+                            viewer.imageryLayers.addImageryProvider(p);
+                        }).catch(function() {
+                            // Fall back to ArcGIS if Ion fails
+                            viewer.imageryLayers.addImageryProvider(
+                                new Cesium.UrlTemplateImageryProvider({
+                                    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                                    maximumLevel: 18
+                                })
+                            );
+                        });
+                        return;
+                    } catch(e) { /* fall through */ }
                 }
+                provider = new Cesium.UrlTemplateImageryProvider({
+                    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                    maximumLevel: 18
+                });
                 break;
             case 'streets':
                 provider = new Cesium.UrlTemplateImageryProvider({
@@ -256,11 +272,7 @@
                 break;
         }
 
-        if (provider instanceof Promise) {
-            provider.then(function(p) { viewer.imageryLayers.addImageryProvider(p); });
-        } else {
-            viewer.imageryLayers.addImageryProvider(provider);
-        }
+        viewer.imageryLayers.addImageryProvider(provider);
     }
 
     function highlightMarker(id) {
