@@ -7,14 +7,20 @@
     <style>
         html, body, #cesiumContainer {
             width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
-            background: #000;
+            background: #0d1117;
         }
         #statusMsg {
-            position: absolute; top: 40%; left: 0; right: 0;
+            position: absolute; top: 30%; left: 0; right: 0;
             text-align: center; color: #aaa; font-family: sans-serif; font-size: 14px;
             padding: 20px; z-index: 9999; pointer-events: none;
         }
         #statusMsg.error { color: #ff4444; }
+        #debugInfo {
+            position: absolute; bottom: 60px; left: 10px; right: 10px;
+            color: #0f0; font-family: monospace; font-size: 11px;
+            z-index: 99999; pointer-events: none; background: rgba(0,0,0,0.7);
+            padding: 8px; border-radius: 4px; max-height: 120px; overflow: auto;
+        }
         .cesium-viewer-bottom, .cesium-viewer-toolbar,
         .cesium-viewer-animationContainer, .cesium-viewer-timelineContainer,
         .cesium-viewer-fullscreenContainer, .cesium-viewer-infoBoxContainer,
@@ -29,11 +35,23 @@
 <body>
 <div id="cesiumContainer"></div>
 <div id="statusMsg">Loading globe engine...</div>
+<div id="debugInfo">Debug: starting...</div>
 
 <script>
-    // ---- Error handling (defined first, no dependencies) ----
+    // ---- Debug logging (visible on screen) ----
+    var debugLines = [];
+    function dbg(msg) {
+        debugLines.push(msg);
+        if (debugLines.length > 8) debugLines.shift();
+        var el = document.getElementById('debugInfo');
+        if (el) el.textContent = debugLines.join('\n');
+        console.log('GlobeDBG: ' + msg);
+    }
+
+    // ---- Error handling ----
     window.onerror = function(msg, src, line) {
-        showError('Error: ' + msg + ' (line ' + line + ')');
+        showError('JS Error: ' + msg + ' (line ' + line + ')');
+        dbg('ERROR: ' + msg);
         return false;
     };
 
@@ -49,6 +67,23 @@
         console.log('GlobeNews: ' + msg);
     }
 
+    // ---- Check WebGL support ----
+    function checkWebGL() {
+        var canvas = document.createElement('canvas');
+        var gl = null;
+        try {
+            gl = canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        } catch(e) {}
+        if (gl) {
+            var renderer = gl.getParameter(gl.RENDERER);
+            dbg('WebGL OK: ' + renderer);
+            return true;
+        } else {
+            dbg('WebGL NOT available!');
+            return false;
+        }
+    }
+
     // ---- Globe state ----
     var SCOPE_COLORS = {};
     var viewer = null;
@@ -56,9 +91,16 @@
     var cameraMoveTimeout = null;
     var isReady = false;
 
-    // ---- Load Cesium.js dynamically so the page renders first ----
+    // ---- Load Cesium.js dynamically ----
     function loadCesium() {
+        dbg('Checking WebGL...');
+        if (!checkWebGL()) {
+            showError('WebGL not supported on this device.');
+            return;
+        }
+
         showStatus('Downloading Cesium.js...');
+        dbg('Loading Cesium CSS + JS from CDN...');
 
         // Load CSS
         var link = document.createElement('link');
@@ -66,33 +108,48 @@
         link.href = 'https://cesium.com/downloads/cesiumjs/releases/1.124/Build/Cesium/Widgets/widgets.css';
         document.head.appendChild(link);
 
-        // Load JS
+        // Load JS with timeout detection
+        var loaded = false;
         var script = document.createElement('script');
         script.src = 'https://cesium.com/downloads/cesiumjs/releases/1.124/Build/Cesium/Cesium.js';
         script.onload = function() {
+            loaded = true;
+            dbg('Cesium.js loaded (' + (typeof Cesium) + ')');
             showStatus('Initializing globe...');
             var token = '';
             try {
                 if (typeof AndroidBridge !== 'undefined' && AndroidBridge.getCesiumToken) {
                     token = AndroidBridge.getCesiumToken();
                 }
-            } catch(e) { console.error('Token error:', e); }
+            } catch(e) { dbg('Token error: ' + e); }
             initViewer(token);
         };
-        script.onerror = function() {
+        script.onerror = function(e) {
+            dbg('Script onerror fired');
             showError('Failed to load Cesium.js. Check internet connection.');
         };
         document.body.appendChild(script);
+
+        // Timeout check after 30 seconds
+        setTimeout(function() {
+            if (!loaded) {
+                dbg('Cesium load TIMEOUT (30s)');
+                showError('Cesium.js load timed out. Check your connection.');
+            }
+        }, 30000);
     }
 
     // ---- Globe initialization ----
     function initViewer(ionToken) {
         if (typeof Cesium === 'undefined') {
             showError('Cesium library not available.');
+            dbg('Cesium is undefined!');
             return;
         }
 
         try {
+            dbg('Cesium version: ' + Cesium.VERSION);
+
             // Init scope colors now that Cesium is loaded
             SCOPE_COLORS = {
                 'INTERNATIONAL': Cesium.Color.fromCssColorString('#ff4444').withAlpha(0.9),
@@ -105,16 +162,11 @@
                 Cesium.Ion.defaultAccessToken = ionToken;
             }
 
-            // Create viewer with OpenStreetMap as reliable default base layer
-            var osmProvider = new Cesium.UrlTemplateImageryProvider({
-                url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                credit: 'OpenStreetMap',
-                maximumLevel: 19
-            });
-            var defaultLayer = new Cesium.ImageryLayer(osmProvider);
+            dbg('Creating Viewer...');
 
+            // Simple viewer creation - no base layer initially
             viewer = new Cesium.Viewer('cesiumContainer', {
-                baseLayer: defaultLayer,
+                baseLayer: false,
                 baseLayerPicker: false,
                 geocoder: false,
                 homeButton: false,
@@ -128,19 +180,41 @@
                 vrButton: false,
                 scene3DOnly: true,
                 skyBox: false,
-                skyAtmosphere: new Cesium.SkyAtmosphere(),
-                requestRenderMode: false,
-                maximumRenderTimeChange: Infinity
+                skyAtmosphere: false
             });
+
+            dbg('Viewer created OK');
+
+            // Add OpenStreetMap tiles
+            try {
+                viewer.imageryLayers.addImageryProvider(
+                    new Cesium.UrlTemplateImageryProvider({
+                        url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        credit: 'OpenStreetMap',
+                        maximumLevel: 19
+                    })
+                );
+                dbg('OSM imagery added');
+            } catch(e) {
+                dbg('Imagery error: ' + e.message);
+            }
 
             // Flat terrain
             viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
 
-            // Globe appearance - visible base color in case tiles don't load
+            // Globe appearance - bright base color to confirm rendering
             viewer.scene.globe.enableLighting = false;
-            viewer.scene.globe.showGroundAtmosphere = true;
+            viewer.scene.globe.showGroundAtmosphere = false;
             viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#0d1117');
             viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#2d4a6f');
+
+            // Check canvas
+            var canvas = viewer.scene.canvas;
+            dbg('Canvas: ' + canvas.width + 'x' + canvas.height);
+
+            // Check if globe is rendering
+            dbg('Globe show: ' + viewer.scene.globe.show);
+            dbg('Scene mode: ' + viewer.scene.mode);
 
             // Entity clustering
             viewer.dataSourceDisplay.defaultDataSource.clustering.enabled = true;
@@ -168,16 +242,33 @@
                 }
             }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
-            // Success - hide status
+            // Report render after a short delay
+            setTimeout(function() {
+                if (viewer && viewer.scene) {
+                    var c = viewer.scene.canvas;
+                    var gl = c.getContext('webgl2') || c.getContext('webgl');
+                    if (gl) {
+                        dbg('GL context on Cesium canvas: YES');
+                        dbg('Drawing buffer: ' + gl.drawingBufferWidth + 'x' + gl.drawingBufferHeight);
+                    } else {
+                        dbg('GL context on Cesium canvas: FAILED');
+                    }
+                }
+            }, 2000);
+
+            // Success - hide status (keep debug visible)
             var el = document.getElementById('statusMsg');
             if (el) el.style.display = 'none';
 
             isReady = true;
+            dbg('Globe ready!');
             if (typeof AndroidBridge !== 'undefined') {
                 AndroidBridge.onReady();
             }
         } catch (e) {
             showError('Globe init failed: ' + e.message);
+            dbg('INIT ERROR: ' + e.message);
+            dbg('Stack: ' + (e.stack || 'none').substring(0, 200));
         }
     }
 
@@ -335,6 +426,7 @@
     }
 
     // ---- Start loading when page is ready ----
+    dbg('Page loaded, starting Cesium load...');
     loadCesium();
 </script>
 </body>
