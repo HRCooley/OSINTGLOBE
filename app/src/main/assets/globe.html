@@ -121,9 +121,25 @@
                 'LOCAL': Cesium.Color.fromCssColorString('#4488ff').withAlpha(0.9)
             };
 
-            dbg('Creating viewer...');
+            // Get real GPU info
+            try {
+                var tc = document.createElement('canvas');
+                var tgl = tc.getContext('webgl2') || tc.getContext('webgl');
+                if (tgl) {
+                    var ext = tgl.getExtension('WEBGL_debug_renderer_info');
+                    if (ext) {
+                        dbg('GPU: ' + tgl.getParameter(ext.UNMASKED_RENDERER_WEBGL));
+                    } else {
+                        dbg('GPU: (debug_renderer_info not available)');
+                    }
+                }
+            } catch(e) { dbg('GPU check err: ' + e.message); }
 
+            dbg('Creating 2D viewer...');
+
+            // Use SCENE2D to bypass 3D globe shaders entirely
             viewer = new Cesium.Viewer('cesiumContainer', {
+                sceneMode: Cesium.SceneMode.SCENE2D,
                 baseLayer: false,
                 baseLayerPicker: false,
                 geocoder: false,
@@ -141,7 +157,7 @@
                 orderIndependentTranslucency: false,
                 contextOptions: {
                     webgl: {
-                        alpha: true,
+                        alpha: false,
                         depth: true,
                         stencil: false,
                         antialias: true,
@@ -151,22 +167,20 @@
                 }
             });
 
-            dbg('Viewer OK');
+            dbg('Viewer OK, mode=' + viewer.scene.mode);
 
-            // Disable logarithmic depth buffer - causes issues on some mobile GPUs
+            // Disable logarithmic depth buffer
             viewer.scene.logarithmicDepthBuffer = false;
-            dbg('LogDepth disabled');
 
             // Flat terrain
             viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
 
-            // Globe appearance - BRIGHT GREEN for debug visibility
+            // Globe appearance
             viewer.scene.globe.enableLighting = false;
             viewer.scene.globe.showGroundAtmosphere = false;
             viewer.scene.globe.depthTestAgainstTerrain = false;
             viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#00ff00');
             viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#1a0000');
-            dbg('Globe baseColor=#00ff00 (GREEN)');
 
             // Add OSM tiles
             try {
@@ -182,30 +196,57 @@
                 dbg('Imagery err: ' + e.message);
             }
 
+            // Add a visible test entity - large red dot
+            viewer.entities.add({
+                position: Cesium.Cartesian3.fromDegrees(0, 0),
+                point: {
+                    pixelSize: 30,
+                    color: Cesium.Color.RED,
+                    outlineColor: Cesium.Color.YELLOW,
+                    outlineWidth: 3,
+                    disableDepthTestDistance: Number.POSITIVE_INFINITY
+                },
+                label: {
+                    text: 'TEST MARKER',
+                    font: 'bold 16px sans-serif',
+                    fillColor: Cesium.Color.YELLOW,
+                    style: Cesium.LabelStyle.FILL,
+                    pixelOffset: new Cesium.Cartesian2(0, -25),
+                    disableDepthTestDistance: Number.POSITIVE_INFINITY
+                }
+            });
+            dbg('Test entity added at 0,0');
+
             // Canvas info
             var canvas = viewer.scene.canvas;
-            dbg('Canvas: ' + canvas.width + 'x' + canvas.height + ' css:' + canvas.clientWidth + 'x' + canvas.clientHeight);
+            dbg('Canvas: ' + canvas.width + 'x' + canvas.height);
 
-            // Check GL on viewer's canvas
-            var gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
-            if (gl) {
-                dbg('Viewer GL: ' + gl.drawingBufferWidth + 'x' + gl.drawingBufferHeight);
-                // Read center pixel color after a delay
-                setTimeout(function() {
-                    try {
-                        viewer.scene.render();
+            // Check GL errors and pixel after render
+            setTimeout(function() {
+                try {
+                    var gl = viewer.scene.context._gl;
+                    if (!gl) {
+                        // Fallback
+                        gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+                    }
+                    if (gl) {
+                        var err = gl.getError();
+                        dbg('GL error: ' + (err === 0 ? 'NONE' : '0x' + err.toString(16)));
+
                         var px = new Uint8Array(4);
                         var cx = Math.floor(gl.drawingBufferWidth / 2);
                         var cy = Math.floor(gl.drawingBufferHeight / 2);
                         gl.readPixels(cx, cy, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
-                        dbg('Center pixel: rgba(' + px[0] + ',' + px[1] + ',' + px[2] + ',' + px[3] + ')');
-                    } catch(e) {
-                        dbg('readPixels err: ' + e.message);
+                        dbg('Center px: rgba(' + px[0] + ',' + px[1] + ',' + px[2] + ',' + px[3] + ')');
+
+                        // Also read a few more pixels for comparison
+                        gl.readPixels(10, 10, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+                        dbg('Corner px: rgba(' + px[0] + ',' + px[1] + ',' + px[2] + ',' + px[3] + ')');
                     }
-                }, 3000);
-            } else {
-                dbg('Viewer GL: FAILED to get context');
-            }
+                } catch(e) {
+                    dbg('GL check err: ' + e.message);
+                }
+            }, 4000);
 
             // Entity clustering
             viewer.dataSourceDisplay.defaultDataSource.clustering.enabled = true;
