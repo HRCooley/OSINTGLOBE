@@ -17,6 +17,7 @@ import com.globenews.data.source.remote.newsapi.NewsApiService
 import com.globenews.data.source.remote.rss.RssFeedLoader
 import com.globenews.data.source.remote.rss.RssParser
 import com.globenews.domain.model.EditorialScope
+import com.globenews.domain.model.NewsCategory
 import com.globenews.domain.model.NewsStory
 import com.globenews.domain.repository.NewsRepository
 import com.globenews.plugin.GeoBounds
@@ -71,7 +72,8 @@ class NewsRepositoryImpl @Inject constructor(
     override fun getStoriesByRegion(
         bounds: GeoBounds,
         scopes: Set<EditorialScope>,
-        forceRefresh: Boolean
+        forceRefresh: Boolean,
+        category: NewsCategory
     ): Flow<Result<List<NewsStory>>> = flow {
         val scopeStrings = scopes.map { it.name }
         val now = System.currentTimeMillis()
@@ -86,7 +88,10 @@ class NewsRepositoryImpl @Inject constructor(
 
         cachedEntities.collect { entities ->
             if (!emittedCache || !forceRefresh) {
-                val stories = entities.map { EntityMapper.entityToDomain(it) }
+                var stories = entities.map { EntityMapper.entityToDomain(it) }
+                if (category != NewsCategory.ALL) {
+                    stories = stories.filter { NewsCategory.matchesCategory(category, it.title, it.summary) }
+                }
                 if (stories.isNotEmpty()) {
                     emit(Result.success(stories))
                     emittedCache = true
@@ -96,7 +101,7 @@ class NewsRepositoryImpl @Inject constructor(
             if (!emittedCache || forceRefresh) {
                 // Fetch from remote sources
                 try {
-                    val freshStories = fetchFromAllSources(bounds, scopes)
+                    val freshStories = fetchFromAllSources(bounds, scopes, category)
                     val deduped = deduplicateStories(freshStories)
 
                     // Cache stories
@@ -135,7 +140,8 @@ class NewsRepositoryImpl @Inject constructor(
      */
     private suspend fun fetchFromAllSources(
         bounds: GeoBounds,
-        scopes: Set<EditorialScope>
+        scopes: Set<EditorialScope>,
+        category: NewsCategory = NewsCategory.ALL
     ): List<NewsStory> = coroutineScope {
         val centerLat = (bounds.north + bounds.south) / 2
         val centerLon = (bounds.east + bounds.west) / 2
@@ -145,12 +151,14 @@ class NewsRepositoryImpl @Inject constructor(
 
         val gdeltDeferred = async {
             try {
-                val query = buildGdeltQuery(bounds)
+                val query = buildGdeltQuery(bounds, category)
+                android.util.Log.d("GDELT", "Query: $query")
                 val response = gdeltApi.searchArticles(query = query)
                 response.articles?.map { article ->
                     GdeltMapper.toDomain(article, centerLat, centerLon, null, null)
                 } ?: emptyList()
             } catch (e: Exception) {
+                android.util.Log.d("GDELT", "Error: ${e.message}")
                 emptyList()
             }
         }
@@ -165,9 +173,14 @@ class NewsRepositoryImpl @Inject constructor(
                     apiKey = key,
                     country = countryCode
                 )
-                response.articles?.map { article ->
+                var stories = response.articles?.map { article ->
                     GNewsMapper.toDomain(article, centerLat, centerLon, null, null)
                 } ?: emptyList()
+                // Client-side category filter for non-GDELT sources
+                if (category != NewsCategory.ALL) {
+                    stories = stories.filter { NewsCategory.matchesCategory(category, it.title, it.summary) }
+                }
+                stories
             } catch (e: Exception) {
                 emptyList()
             }
@@ -183,16 +196,24 @@ class NewsRepositoryImpl @Inject constructor(
                     apiKey = key,
                     country = countryCode
                 )
-                response.articles?.mapNotNull { article ->
+                var stories = response.articles?.mapNotNull { article ->
                     NewsApiMapper.toDomain(article, centerLat, centerLon, null, null)
                 } ?: emptyList()
+                if (category != NewsCategory.ALL) {
+                    stories = stories.filter { NewsCategory.matchesCategory(category, it.title, it.summary) }
+                }
+                stories
             } catch (e: Exception) {
                 emptyList()
             }
         }
 
         val rssDeferred = async {
-            fetchRssFeeds(bounds)
+            var stories = fetchRssFeeds(bounds)
+            if (category != NewsCategory.ALL) {
+                stories = stories.filter { NewsCategory.matchesCategory(category, it.title, it.summary) }
+            }
+            stories
         }
 
         val allStories = mutableListOf<NewsStory>()
@@ -253,10 +274,17 @@ class NewsRepositoryImpl @Inject constructor(
         }
     }
 
-    private fun buildGdeltQuery(bounds: GeoBounds): String {
+    private fun buildGdeltQuery(bounds: GeoBounds, category: NewsCategory = NewsCategory.ALL): String {
         val lat = (bounds.north + bounds.south) / 2
         val lon = (bounds.east + bounds.west) / 2
-        return "near:${lat},${lon} within:500km"
+        val geoQuery = "near:${lat},${lon} within:500km"
+
+        if (category == NewsCategory.ALL || category.gdeltThemes.isEmpty()) {
+            return geoQuery
+        }
+
+        val themeFilter = category.gdeltThemes.joinToString(" OR ") { "theme:$it" }
+        return "$geoQuery AND ($themeFilter)"
     }
 
     private suspend fun canMakeRequest(sourceId: String, maxRequests: Int, windowMs: Long): Boolean {

@@ -1,6 +1,7 @@
 package com.globenews.domain.repository
 
 import com.globenews.domain.model.EditorialScope
+import com.globenews.domain.model.NewsCategory
 import com.globenews.domain.model.NewsStory
 import com.globenews.plugin.GeoBounds
 import kotlinx.coroutines.flow.Flow
@@ -9,7 +10,8 @@ interface NewsRepository {
     fun getStoriesByRegion(
         bounds: GeoBounds,
         scopes: Set<EditorialScope>,
-        forceRefresh: Boolean = false
+        forceRefresh: Boolean = false,
+        category: NewsCategory = NewsCategory.ALL
     ): Flow<Result<List<NewsStory>>>
 
     fun getStoryById(id: String): Flow<NewsStory?>

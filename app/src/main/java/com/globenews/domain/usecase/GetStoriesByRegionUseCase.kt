@@ -1,6 +1,7 @@
 package com.globenews.domain.usecase
 
 import com.globenews.domain.model.EditorialScope
+import com.globenews.domain.model.NewsCategory
 import com.globenews.domain.model.NewsStory
 import com.globenews.domain.repository.NewsRepository
 import com.globenews.plugin.GeoBounds
@@ -24,10 +25,11 @@ class GetStoriesByRegionUseCase @Inject constructor(
     operator fun invoke(
         bounds: GeoBounds,
         altitudeKm: Double,
-        forceRefresh: Boolean = false
+        forceRefresh: Boolean = false,
+        category: NewsCategory = NewsCategory.ALL
     ): Flow<Result<List<NewsStory>>> {
         val scopes = scopesForAltitude(altitudeKm)
-        return newsRepository.getStoriesByRegion(bounds, scopes, forceRefresh)
+        return newsRepository.getStoriesByRegion(bounds, scopes, forceRefresh, category)
     }
 
     private fun scopesForAltitude(altitudeKm: Double): Set<EditorialScope> {
