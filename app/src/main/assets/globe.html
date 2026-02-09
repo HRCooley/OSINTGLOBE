@@ -105,8 +105,16 @@
                 Cesium.Ion.defaultAccessToken = ionToken;
             }
 
+            // Create viewer with OpenStreetMap as reliable default base layer
+            var osmProvider = new Cesium.UrlTemplateImageryProvider({
+                url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                credit: 'OpenStreetMap',
+                maximumLevel: 19
+            });
+            var defaultLayer = new Cesium.ImageryLayer(osmProvider);
+
             viewer = new Cesium.Viewer('cesiumContainer', {
-                baseLayer: false,
+                baseLayer: defaultLayer,
                 baseLayerPicker: false,
                 geocoder: false,
                 homeButton: false,
@@ -125,23 +133,14 @@
                 maximumRenderTimeChange: Infinity
             });
 
-            // Add dark base layer
-            viewer.imageryLayers.addImageryProvider(
-                new Cesium.UrlTemplateImageryProvider({
-                    url: 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-                    credit: 'CartoDB',
-                    maximumLevel: 18
-                })
-            );
-
             // Flat terrain
             viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
 
-            // Globe appearance
-            viewer.scene.globe.enableLighting = true;
+            // Globe appearance - visible base color in case tiles don't load
+            viewer.scene.globe.enableLighting = false;
             viewer.scene.globe.showGroundAtmosphere = true;
-            viewer.scene.backgroundColor = Cesium.Color.BLACK;
-            viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#1a1a2e');
+            viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#0d1117');
+            viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#2d4a6f');
 
             // Entity clustering
             viewer.dataSourceDisplay.defaultDataSource.clustering.enabled = true;
@@ -306,10 +305,15 @@
                 });
                 break;
             case 'dark':
-            default:
                 provider = new Cesium.UrlTemplateImageryProvider({
                     url: 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
                     credit: 'CartoDB', maximumLevel: 18
+                });
+                break;
+            default:
+                provider = new Cesium.UrlTemplateImageryProvider({
+                    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    credit: 'OpenStreetMap', maximumLevel: 19
                 });
                 break;
         }
