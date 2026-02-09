@@ -11,8 +11,8 @@
         }
         #statusMsg {
             position: absolute; top: 40%; left: 0; right: 0;
-            text-align: center; color: #888; font-family: sans-serif; font-size: 14px;
-            padding: 20px; z-index: 10;
+            text-align: center; color: #aaa; font-family: sans-serif; font-size: 14px;
+            padding: 20px; z-index: 9999; pointer-events: none;
         }
         #statusMsg.error { color: #ff4444; }
         .cesium-viewer-bottom, .cesium-viewer-toolbar,
@@ -27,61 +27,79 @@
     </style>
 </head>
 <body>
-<div id="cesiumContainer">
-    <div id="statusMsg">Loading globe...</div>
-</div>
+<div id="cesiumContainer"></div>
+<div id="statusMsg">Loading globe engine...</div>
 
 <script>
-    // Global error handler
-    window.onerror = function(msg, src, line, col, err) {
-        showError('JS Error: ' + msg);
+    // ---- Error handling (defined first, no dependencies) ----
+    window.onerror = function(msg, src, line) {
+        showError('Error: ' + msg + ' (line ' + line + ')');
         return false;
     };
 
     function showError(msg) {
         var el = document.getElementById('statusMsg');
-        if (el) {
-            el.className = 'error';
-            el.textContent = msg;
-        }
-        console.error(msg);
+        if (el) { el.className = 'error'; el.textContent = msg; el.style.display = 'block'; }
+        console.error('GlobeNews: ' + msg);
     }
 
     function showStatus(msg) {
         var el = document.getElementById('statusMsg');
-        if (el) el.textContent = msg;
+        if (el) { el.textContent = msg; el.style.display = 'block'; }
+        console.log('GlobeNews: ' + msg);
     }
-</script>
 
-<script src="https://cesium.com/downloads/cesiumjs/releases/1.124/Build/Cesium/Cesium.js"
-        onerror="showError('Failed to load Cesium.js from CDN. Check internet connection.')"></script>
-<link href="https://cesium.com/downloads/cesiumjs/releases/1.124/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
-
-<script>
+    // ---- Globe state ----
     var SCOPE_COLORS = {};
     var viewer = null;
     var markers = {};
     var cameraMoveTimeout = null;
     var isReady = false;
 
-    function initScopeColors() {
-        SCOPE_COLORS = {
-            'INTERNATIONAL': Cesium.Color.fromCssColorString('#ff4444').withAlpha(0.9),
-            'NATIONAL': Cesium.Color.fromCssColorString('#ff9944').withAlpha(0.9),
-            'REGIONAL': Cesium.Color.fromCssColorString('#4488ff').withAlpha(0.9),
-            'LOCAL': Cesium.Color.fromCssColorString('#4488ff').withAlpha(0.9)
+    // ---- Load Cesium.js dynamically so the page renders first ----
+    function loadCesium() {
+        showStatus('Downloading Cesium.js...');
+
+        // Load CSS
+        var link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://cesium.com/downloads/cesiumjs/releases/1.124/Build/Cesium/Widgets/widgets.css';
+        document.head.appendChild(link);
+
+        // Load JS
+        var script = document.createElement('script');
+        script.src = 'https://cesium.com/downloads/cesiumjs/releases/1.124/Build/Cesium/Cesium.js';
+        script.onload = function() {
+            showStatus('Initializing globe...');
+            var token = '';
+            try {
+                if (typeof AndroidBridge !== 'undefined' && AndroidBridge.getCesiumToken) {
+                    token = AndroidBridge.getCesiumToken();
+                }
+            } catch(e) { console.error('Token error:', e); }
+            initViewer(token);
         };
+        script.onerror = function() {
+            showError('Failed to load Cesium.js. Check internet connection.');
+        };
+        document.body.appendChild(script);
     }
 
+    // ---- Globe initialization ----
     function initViewer(ionToken) {
         if (typeof Cesium === 'undefined') {
-            showError('Cesium library not loaded. Check internet connection.');
+            showError('Cesium library not available.');
             return;
         }
 
         try {
-            showStatus('Initializing globe...');
-            initScopeColors();
+            // Init scope colors now that Cesium is loaded
+            SCOPE_COLORS = {
+                'INTERNATIONAL': Cesium.Color.fromCssColorString('#ff4444').withAlpha(0.9),
+                'NATIONAL': Cesium.Color.fromCssColorString('#ff9944').withAlpha(0.9),
+                'REGIONAL': Cesium.Color.fromCssColorString('#4488ff').withAlpha(0.9),
+                'LOCAL': Cesium.Color.fromCssColorString('#4488ff').withAlpha(0.9)
+            };
 
             if (ionToken && ionToken.length > 0) {
                 Cesium.Ion.defaultAccessToken = ionToken;
@@ -116,47 +134,44 @@
                 })
             );
 
-            // Disable terrain
+            // Flat terrain
             viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
 
-            // Enable lighting for day/night terminator
+            // Globe appearance
             viewer.scene.globe.enableLighting = true;
             viewer.scene.globe.showGroundAtmosphere = true;
+            viewer.scene.backgroundColor = Cesium.Color.BLACK;
+            viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#1a1a2e');
 
             // Entity clustering
             viewer.dataSourceDisplay.defaultDataSource.clustering.enabled = true;
             viewer.dataSourceDisplay.defaultDataSource.clustering.pixelRange = 40;
             viewer.dataSourceDisplay.defaultDataSource.clustering.minimumClusterSize = 3;
 
-            // Background color
-            viewer.scene.backgroundColor = Cesium.Color.BLACK;
-            viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#1a1a2e');
-
             // Camera move listener
             viewer.camera.moveEnd.addEventListener(function() {
                 if (cameraMoveTimeout) clearTimeout(cameraMoveTimeout);
                 cameraMoveTimeout = setTimeout(function() {
-                    var viewJson = getCurrentView();
                     if (typeof AndroidBridge !== 'undefined') {
-                        AndroidBridge.onCameraMove(viewJson);
+                        AndroidBridge.onCameraMove(getCurrentView());
                     }
                 }, 400);
             });
 
-            // Click handler for markers
+            // Marker click handler
             var handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
             handler.setInputAction(function(click) {
-                var pickedObject = viewer.scene.pick(click.position);
-                if (Cesium.defined(pickedObject) && pickedObject.id && pickedObject.id.storyId) {
+                var picked = viewer.scene.pick(click.position);
+                if (Cesium.defined(picked) && picked.id && picked.id.storyId) {
                     if (typeof AndroidBridge !== 'undefined') {
-                        AndroidBridge.onMarkerTap(pickedObject.id.storyId);
+                        AndroidBridge.onMarkerTap(picked.id.storyId);
                     }
                 }
             }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
-            // Hide status message on success
-            var statusEl = document.getElementById('statusMsg');
-            if (statusEl) statusEl.style.display = 'none';
+            // Success - hide status
+            var el = document.getElementById('statusMsg');
+            if (el) el.style.display = 'none';
 
             isReady = true;
             if (typeof AndroidBridge !== 'undefined') {
@@ -164,10 +179,10 @@
             }
         } catch (e) {
             showError('Globe init failed: ' + e.message);
-            console.error('initViewer error:', e);
         }
     }
 
+    // ---- Marker management (called from Android) ----
     function addMarkers(jsonArrayString) {
         if (!viewer) return;
         try {
@@ -182,12 +197,8 @@
                 var color = SCOPE_COLORS[item.scope] || SCOPE_COLORS['NATIONAL'];
                 var hoursAgo = (Date.now() - (item.publishedAt || Date.now())) / 3600000;
                 var size = hoursAgo < 6 ? 12 : (hoursAgo < 24 ? 9 : 7);
-
-                if (altitude > 15000) {
-                    size = 6;
-                } else if (altitude < 500) {
-                    size = 14;
-                }
+                if (altitude > 15000) size = 6;
+                else if (altitude < 500) size = 14;
 
                 var entity = viewer.entities.add({
                     position: Cesium.Cartesian3.fromDegrees(item.lon, item.lat),
@@ -240,13 +251,13 @@
 
     function getCurrentView() {
         if (!viewer) return '{}';
-        var cartographic = viewer.camera.positionCartographic;
-        var lat = Cesium.Math.toDegrees(cartographic.latitude);
-        var lon = Cesium.Math.toDegrees(cartographic.longitude);
-        var altitude = cartographic.height / 1000;
+        var c = viewer.camera.positionCartographic;
+        var lat = Cesium.Math.toDegrees(c.latitude);
+        var lon = Cesium.Math.toDegrees(c.longitude);
+        var altitude = c.height / 1000;
 
         var rect = viewer.camera.computeViewRectangle();
-        var bounds = {};
+        var bounds;
         if (rect) {
             bounds = {
                 north: Cesium.Math.toDegrees(rect.north),
@@ -256,19 +267,11 @@
             };
         } else {
             bounds = {
-                north: Math.min(lat + 30, 90),
-                south: Math.max(lat - 30, -90),
-                east: Math.min(lon + 60, 180),
-                west: Math.max(lon - 60, -180)
+                north: Math.min(lat + 30, 90), south: Math.max(lat - 30, -90),
+                east: Math.min(lon + 60, 180), west: Math.max(lon - 60, -180)
             };
         }
-
-        return JSON.stringify({
-            lat: lat,
-            lon: lon,
-            altitude: altitude,
-            bounds: bounds
-        });
+        return JSON.stringify({ lat: lat, lon: lon, altitude: altitude, bounds: bounds });
     }
 
     function setBaseLayer(providerName) {
@@ -280,19 +283,16 @@
             case 'satellite':
                 if (Cesium.Ion.defaultAccessToken) {
                     try {
-                        var ionPromise = Cesium.IonImageryProvider.fromAssetId(2);
-                        ionPromise.then(function(p) {
+                        Cesium.IonImageryProvider.fromAssetId(2).then(function(p) {
                             viewer.imageryLayers.addImageryProvider(p);
                         }).catch(function() {
-                            viewer.imageryLayers.addImageryProvider(
-                                new Cesium.UrlTemplateImageryProvider({
-                                    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-                                    maximumLevel: 18
-                                })
-                            );
+                            viewer.imageryLayers.addImageryProvider(new Cesium.UrlTemplateImageryProvider({
+                                url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                                maximumLevel: 18
+                            }));
                         });
                         return;
-                    } catch(e) { /* fall through */ }
+                    } catch(e) {}
                 }
                 provider = new Cesium.UrlTemplateImageryProvider({
                     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
@@ -302,20 +302,17 @@
             case 'streets':
                 provider = new Cesium.UrlTemplateImageryProvider({
                     url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    credit: 'OpenStreetMap',
-                    maximumLevel: 18
+                    credit: 'OpenStreetMap', maximumLevel: 18
                 });
                 break;
             case 'dark':
             default:
                 provider = new Cesium.UrlTemplateImageryProvider({
                     url: 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-                    credit: 'CartoDB',
-                    maximumLevel: 18
+                    credit: 'CartoDB', maximumLevel: 18
                 });
                 break;
         }
-
         viewer.imageryLayers.addImageryProvider(provider);
     }
 
@@ -323,33 +320,18 @@
         if (!viewer || !markers[id]) return;
         var entity = markers[id];
         if (entity.point) {
-            var originalSize = entity.point.pixelSize.getValue();
-            var pulseCount = 0;
-            var pulseInterval = setInterval(function() {
-                entity.point.pixelSize = (pulseCount % 2 === 0) ? originalSize * 1.8 : originalSize;
-                entity.point.outlineWidth = (pulseCount % 2 === 0) ? 3 : 1;
-                pulseCount++;
-                if (pulseCount >= 6) {
-                    clearInterval(pulseInterval);
-                    entity.point.pixelSize = originalSize;
-                    entity.point.outlineWidth = 1;
-                }
+            var orig = entity.point.pixelSize.getValue();
+            var n = 0;
+            var iv = setInterval(function() {
+                entity.point.pixelSize = (n % 2 === 0) ? orig * 1.8 : orig;
+                entity.point.outlineWidth = (n % 2 === 0) ? 3 : 1;
+                if (++n >= 6) { clearInterval(iv); entity.point.pixelSize = orig; entity.point.outlineWidth = 1; }
             }, 300);
         }
     }
 
-    // Initialize on load
-    window.addEventListener('load', function() {
-        var token = '';
-        try {
-            if (typeof AndroidBridge !== 'undefined' && AndroidBridge.getCesiumToken) {
-                token = AndroidBridge.getCesiumToken();
-            }
-        } catch(e) {
-            console.error('Failed to get token:', e);
-        }
-        initViewer(token);
-    });
+    // ---- Start loading when page is ready ----
+    loadCesium();
 </script>
 </body>
 </html>
