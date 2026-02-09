@@ -64,19 +64,17 @@ fun GlobeWebView(
                 settings.apply {
                     javaScriptEnabled = true
                     domStorageEnabled = true
+                    databaseEnabled = true
                     allowFileAccess = true
                     allowContentAccess = true
                     mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
                     cacheMode = WebSettings.LOAD_DEFAULT
-                    useWideViewPort = true
-                    loadWithOverviewMode = true
                     setSupportZoom(false)
                     builtInZoomControls = false
                     displayZoomControls = false
+                    mediaPlaybackRequiresUserGesture = false
                 }
 
-                // Hardware acceleration required for WebGL (Cesium)
-                setLayerType(View.LAYER_TYPE_HARDWARE, null)
                 setBackgroundColor(0xFF000000.toInt())
 
                 addJavascriptInterface(bridge, "AndroidBridge")
@@ -93,6 +91,7 @@ fun GlobeWebView(
                 webViewClient = object : WebViewClient() {
                     override fun onPageFinished(view: WebView?, url: String?) {
                         super.onPageFinished(view, url)
+                        Log.d("GlobeWebView", "Page loaded: $url")
                     }
 
                     override fun onReceivedError(
@@ -105,8 +104,11 @@ fun GlobeWebView(
                     }
                 }
 
-                loadUrl("file:///android_asset/globe.html")
                 onWebViewCreated(this)
+
+                post {
+                    loadUrl("file:///android_asset/globe.html")
+                }
             }
         }
     )
