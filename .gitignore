@@ -12,3 +12,4 @@ local.properties
 *.aab
 *.ap_
 *.dex
+app-debug.apk
