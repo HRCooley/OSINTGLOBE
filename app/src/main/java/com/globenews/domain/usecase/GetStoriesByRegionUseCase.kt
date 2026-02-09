@@ -16,15 +16,14 @@ class GetStoriesByRegionUseCase @Inject constructor(
         forceRefresh: Boolean = false
     ): Flow<Result<List<NewsStory>>> {
         val scopes = scopesForAltitude(altitudeKm)
-        return newsRepository.getStoriesByRegion(bounds, scopes, forceRefresh)
+        return newsRepository.getStoriesByRegion(bounds, scopes, altitudeKm, forceRefresh)
     }
 
     private fun scopesForAltitude(altitudeKm: Double): Set<EditorialScope> {
         return when {
-            altitudeKm > 15_000 -> setOf(EditorialScope.INTERNATIONAL)
-            altitudeKm > 5_000 -> setOf(EditorialScope.INTERNATIONAL, EditorialScope.NATIONAL)
-            altitudeKm > 500 -> setOf(EditorialScope.NATIONAL, EditorialScope.REGIONAL)
-            else -> setOf(EditorialScope.REGIONAL, EditorialScope.LOCAL)
+            altitudeKm > 15_000 -> setOf(EditorialScope.INTERNATIONAL, EditorialScope.NATIONAL)
+            altitudeKm > 5_000 -> setOf(EditorialScope.INTERNATIONAL, EditorialScope.NATIONAL, EditorialScope.REGIONAL)
+            else -> EditorialScope.entries.toSet()
         }
     }
 }

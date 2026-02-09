@@ -9,6 +9,7 @@ interface NewsRepository {
     fun getStoriesByRegion(
         bounds: GeoBounds,
         scopes: Set<EditorialScope>,
+        altitudeKm: Double = 20000.0,
         forceRefresh: Boolean = false
     ): Flow<Result<List<NewsStory>>>
 
