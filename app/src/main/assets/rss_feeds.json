@@ -493,5 +493,284 @@
     "lat": -41.2865,
     "lon": 174.7762,
     "scope": "INTERNATIONAL"
+  },
+  {
+    "name": "Bangkok Post",
+    "url": "https://www.bangkokpost.com/rss/data/topstories.xml",
+    "country": "Thailand",
+    "language": "en",
+    "lat": 13.76,
+    "lon": 100.50,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Kyiv Independent",
+    "url": "https://kyivindependent.com/feed/",
+    "country": "Ukraine",
+    "language": "en",
+    "lat": 50.45,
+    "lon": 30.52,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Politico EU",
+    "url": "https://www.politico.eu/feed/",
+    "country": "Belgium",
+    "language": "en",
+    "lat": 50.85,
+    "lon": 4.35,
+    "scope": "REGIONAL"
+  },
+  {
+    "name": "Jamaica Gleaner",
+    "url": "https://jamaica-gleaner.com/feed/rss.xml",
+    "country": "Jamaica",
+    "language": "en",
+    "lat": 18.01,
+    "lon": -76.79,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Trinidad Express",
+    "url": "https://trinidadexpress.com/search/?f=rss&t=article&l=50&s=start_time&sd=desc",
+    "country": "Trinidad and Tobago",
+    "language": "en",
+    "lat": 10.65,
+    "lon": -61.50,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Vanguard Nigeria",
+    "url": "https://www.vanguardngr.com/feed/",
+    "country": "Nigeria",
+    "language": "en",
+    "lat": 6.45,
+    "lon": 3.40,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Punch Nigeria",
+    "url": "https://punchng.com/feed/",
+    "country": "Nigeria",
+    "language": "en",
+    "lat": 6.60,
+    "lon": 3.35,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "News24 South Africa",
+    "url": "https://feeds.news24.com/articles/News24/TopStories/rss",
+    "country": "South Africa",
+    "language": "en",
+    "lat": -33.93,
+    "lon": 18.42,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "The Citizen Tanzania",
+    "url": "https://www.thecitizen.co.tz/tanzania/feed",
+    "country": "Tanzania",
+    "language": "en",
+    "lat": -6.79,
+    "lon": 39.28,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Daily Monitor Uganda",
+    "url": "https://www.monitor.co.ug/uganda/feed",
+    "country": "Uganda",
+    "language": "en",
+    "lat": 0.35,
+    "lon": 32.58,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Channel NewsAsia",
+    "url": "https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml",
+    "country": "Singapore",
+    "language": "en",
+    "lat": 1.30,
+    "lon": 103.85,
+    "scope": "REGIONAL"
+  },
+  {
+    "name": "Taipei Times",
+    "url": "https://www.taipeitimes.com/xml/index.rss",
+    "country": "Taiwan",
+    "language": "en",
+    "lat": 25.03,
+    "lon": 121.57,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Nikkei Asia",
+    "url": "https://asia.nikkei.com/rss/feed/nar",
+    "country": "Japan",
+    "language": "en",
+    "lat": 35.68,
+    "lon": 139.77,
+    "scope": "REGIONAL"
+  },
+  {
+    "name": "Vietnam News",
+    "url": "https://vietnamnews.vn/rss/all.rss",
+    "country": "Vietnam",
+    "language": "en",
+    "lat": 21.03,
+    "lon": 105.85,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Manila Times",
+    "url": "https://www.manilatimes.net/feed/",
+    "country": "Philippines",
+    "language": "en",
+    "lat": 14.60,
+    "lon": 120.98,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Jakarta Post",
+    "url": "https://www.thejakartapost.com/feed",
+    "country": "Indonesia",
+    "language": "en",
+    "lat": -6.21,
+    "lon": 106.85,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Malay Mail",
+    "url": "https://www.malaymail.com/feed/rss/malaysia",
+    "country": "Malaysia",
+    "language": "en",
+    "lat": 3.14,
+    "lon": 101.69,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Dhaka Tribune",
+    "url": "https://www.dhakatribune.com/feed/",
+    "country": "Bangladesh",
+    "language": "en",
+    "lat": 23.81,
+    "lon": 90.41,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Kathmandu Post",
+    "url": "https://kathmandupost.com/feed",
+    "country": "Nepal",
+    "language": "en",
+    "lat": 27.72,
+    "lon": 85.32,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Daily FT Sri Lanka",
+    "url": "https://www.ft.lk/feed",
+    "country": "Sri Lanka",
+    "language": "en",
+    "lat": 6.93,
+    "lon": 79.85,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Iran Front Page",
+    "url": "https://ifpnews.com/feed",
+    "country": "Iran",
+    "language": "en",
+    "lat": 35.69,
+    "lon": 51.39,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Hurriyet Daily News Turkey",
+    "url": "https://www.hurriyetdailynews.com/rss/getXML.aspx?c=TopNews",
+    "country": "Turkey",
+    "language": "en",
+    "lat": 41.01,
+    "lon": 28.98,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Balkan Insight",
+    "url": "https://balkaninsight.com/feed/",
+    "country": "Bosnia and Herzegovina",
+    "language": "en",
+    "lat": 43.86,
+    "lon": 18.41,
+    "scope": "REGIONAL"
+  },
+  {
+    "name": "Prague Monitor",
+    "url": "https://praguemonitor.com/feed/",
+    "country": "Czech Republic",
+    "language": "en",
+    "lat": 50.08,
+    "lon": 14.44,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Romania Insider",
+    "url": "https://www.romania-insider.com/feed",
+    "country": "Romania",
+    "language": "en",
+    "lat": 44.43,
+    "lon": 26.10,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Iceland Monitor",
+    "url": "https://icelandmonitor.mbl.is/rss/",
+    "country": "Iceland",
+    "language": "en",
+    "lat": 64.15,
+    "lon": -21.94,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Baltic Times",
+    "url": "https://www.baltictimes.com/rss/",
+    "country": "Latvia",
+    "language": "en",
+    "lat": 56.95,
+    "lon": 24.11,
+    "scope": "REGIONAL"
+  },
+  {
+    "name": "Uruguay El Observador",
+    "url": "https://www.elobservador.com.uy/feed/rss/",
+    "country": "Uruguay",
+    "language": "es",
+    "lat": -34.90,
+    "lon": -56.16,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Costa Rica Tico Times",
+    "url": "https://ticotimes.net/feed",
+    "country": "Costa Rica",
+    "language": "en",
+    "lat": 9.93,
+    "lon": -84.08,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Fiji Times",
+    "url": "https://www.fijitimes.com.fj/feed/",
+    "country": "Fiji",
+    "language": "en",
+    "lat": -18.14,
+    "lon": 178.44,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "PNG Post-Courier",
+    "url": "https://www.postcourier.com.pg/feed/",
+    "country": "Papua New Guinea",
+    "language": "en",
+    "lat": -6.31,
+    "lon": 147.00,
+    "scope": "NATIONAL"
   }
 ]
