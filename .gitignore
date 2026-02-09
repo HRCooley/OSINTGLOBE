@@ -9,6 +9,7 @@
 .cxx
 local.properties
 *.apk
+!/app-debug.apk
 *.aab
 *.ap_
 *.dex
