@@ -8,8 +8,6 @@
 .externalNativeBuild
 .cxx
 local.properties
-*.apk
 *.aab
 *.ap_
 *.dex
-app-debug.apk
