@@ -99,15 +99,6 @@
     "scope": "NATIONAL"
   },
   {
-    "name": "Xinhua News Agency",
-    "url": "http://www.xinhuanet.com/english/rss/worldrss.xml",
-    "country": "China",
-    "language": "zh",
-    "lat": 39.9042,
-    "lon": 116.4074,
-    "scope": "INTERNATIONAL"
-  },
-  {
     "name": "South China Morning Post",
     "url": "https://www.scmp.com/rss/91/feed",
     "country": "Hong Kong",
@@ -141,15 +132,6 @@
     "language": "en",
     "lat": 40.7561,
     "lon": -73.9903,
-    "scope": "INTERNATIONAL"
-  },
-  {
-    "name": "Washington Post - World",
-    "url": "https://feeds.washingtonpost.com/rss/world",
-    "country": "United States",
-    "language": "en",
-    "lat": 38.9048,
-    "lon": -77.0325,
     "scope": "INTERNATIONAL"
   },
   {
@@ -189,33 +171,6 @@
     "scope": "NATIONAL"
   },
   {
-    "name": "Los Angeles Times - World",
-    "url": "https://www.latimes.com/world-nation/rss2.0.xml",
-    "country": "United States",
-    "language": "en",
-    "lat": 34.0459,
-    "lon": -118.2468,
-    "scope": "INTERNATIONAL"
-  },
-  {
-    "name": "Chicago Tribune - Nation & World",
-    "url": "https://www.chicagotribune.com/arcio/rss/category/nation-world/",
-    "country": "United States",
-    "language": "en",
-    "lat": 41.8827,
-    "lon": -87.6233,
-    "scope": "NATIONAL"
-  },
-  {
-    "name": "Miami Herald",
-    "url": "https://www.miamiherald.com/news/nation-world/index.rss",
-    "country": "United States",
-    "language": "en",
-    "lat": 25.7617,
-    "lon": -80.1918,
-    "scope": "REGIONAL"
-  },
-  {
     "name": "Buenos Aires Times",
     "url": "https://www.batimes.com.ar/feed",
     "country": "Argentina",
@@ -225,7 +180,7 @@
     "scope": "NATIONAL"
   },
   {
-    "name": "Folha de S.Paulo",
+    "name": "Folha de S.Paulo - World",
     "url": "https://feeds.folha.uol.com.br/mundo/rss091.xml",
     "country": "Brazil",
     "language": "pt",
@@ -252,15 +207,6 @@
     "scope": "NATIONAL"
   },
   {
-    "name": "El Universal - Venezuela",
-    "url": "https://www.eluniversal.com/rss/",
-    "country": "Venezuela",
-    "language": "es",
-    "lat": 10.4806,
-    "lon": -66.9036,
-    "scope": "NATIONAL"
-  },
-  {
     "name": "El Comercio - Peru",
     "url": "https://elcomercio.pe/arcio/rss/",
     "country": "Peru",
@@ -279,7 +225,7 @@
     "scope": "INTERNATIONAL"
   },
   {
-    "name": "Le Monde",
+    "name": "Le Monde - International",
     "url": "https://www.lemonde.fr/international/rss_full.xml",
     "country": "France",
     "language": "fr",
@@ -315,30 +261,12 @@
     "scope": "NATIONAL"
   },
   {
-    "name": "Aftenposten - Norway",
-    "url": "https://www.aftenposten.no/rss/nyheter",
-    "country": "Norway",
-    "language": "no",
-    "lat": 59.9139,
-    "lon": 10.7522,
-    "scope": "NATIONAL"
-  },
-  {
     "name": "The Moscow Times",
     "url": "https://www.themoscowtimes.com/rss/news",
     "country": "Russia",
     "language": "en",
     "lat": 55.7558,
     "lon": 37.6173,
-    "scope": "NATIONAL"
-  },
-  {
-    "name": "Politiken - Denmark",
-    "url": "https://politiken.dk/rss/senestenyt.rss",
-    "country": "Denmark",
-    "language": "da",
-    "lat": 55.6761,
-    "lon": 12.5683,
     "scope": "NATIONAL"
   },
   {
@@ -358,15 +286,6 @@
     "lat": 46.9480,
     "lon": 7.4474,
     "scope": "INTERNATIONAL"
-  },
-  {
-    "name": "Polish Radio - English",
-    "url": "https://www.polskieradio.pl/395/rss",
-    "country": "Poland",
-    "language": "en",
-    "lat": 52.2297,
-    "lon": 21.0122,
-    "scope": "NATIONAL"
   },
   {
     "name": "Sahara Reporters - Nigeria",
@@ -441,30 +360,12 @@
     "scope": "NATIONAL"
   },
   {
-    "name": "Yomiuri Shimbun - Japan",
-    "url": "https://www.yomiuri.co.jp/feed/",
-    "country": "Japan",
-    "language": "ja",
-    "lat": 35.6870,
-    "lon": 139.7537,
-    "scope": "NATIONAL"
-  },
-  {
     "name": "Haaretz - Israel",
     "url": "https://www.haaretz.com/cmlink/1.628765",
     "country": "Israel",
     "language": "en",
     "lat": 32.0853,
     "lon": 34.7818,
-    "scope": "NATIONAL"
-  },
-  {
-    "name": "The Daily Star - Lebanon",
-    "url": "https://www.dailystar.com.lb/RSS.aspx?live=1",
-    "country": "Lebanon",
-    "language": "en",
-    "lat": 33.8938,
-    "lon": 35.5018,
     "scope": "NATIONAL"
   },
   {
@@ -493,5 +394,248 @@
     "lat": -41.2865,
     "lon": 174.7762,
     "scope": "INTERNATIONAL"
+  },
+  {
+    "name": "Daily Monitor - Uganda",
+    "url": "https://www.monitor.co.ug/rss.xml",
+    "country": "Uganda",
+    "language": "en",
+    "lat": 0.3476,
+    "lon": 32.5825,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "The Citizen - Tanzania",
+    "url": "https://www.thecitizen.co.tz/rss.xml",
+    "country": "Tanzania",
+    "language": "en",
+    "lat": -6.7924,
+    "lon": 39.2083,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Addis Standard - Ethiopia",
+    "url": "https://addisstandard.com/feed/",
+    "country": "Ethiopia",
+    "language": "en",
+    "lat": 9.0250,
+    "lon": 38.7469,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Punch Nigeria",
+    "url": "https://punchng.com/feed/",
+    "country": "Nigeria",
+    "language": "en",
+    "lat": 6.4541,
+    "lon": 3.3947,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "News24 - South Africa",
+    "url": "https://feeds.news24.com/articles/news24/TopStories/rss",
+    "country": "South Africa",
+    "language": "en",
+    "lat": -33.9249,
+    "lon": 18.4241,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Daily Sabah - Turkey",
+    "url": "https://www.dailysabah.com/rssFeed/todays-headlines",
+    "country": "Turkey",
+    "language": "en",
+    "lat": 41.0082,
+    "lon": 28.9784,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "The National - UAE",
+    "url": "https://www.thenationalnews.com/rss",
+    "country": "UAE",
+    "language": "en",
+    "lat": 24.4539,
+    "lon": 54.3773,
+    "scope": "REGIONAL"
+  },
+  {
+    "name": "Jordan Times",
+    "url": "https://www.jordantimes.com/rss.xml",
+    "country": "Jordan",
+    "language": "en",
+    "lat": 31.9454,
+    "lon": 35.9284,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Nikkei Asia",
+    "url": "https://asia.nikkei.com/rss",
+    "country": "Japan",
+    "language": "en",
+    "lat": 35.6762,
+    "lon": 139.6503,
+    "scope": "REGIONAL"
+  },
+  {
+    "name": "Bangkok Post",
+    "url": "https://www.bangkokpost.com/rss/data/topstories.xml",
+    "country": "Thailand",
+    "language": "en",
+    "lat": 13.7563,
+    "lon": 100.5018,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "VnExpress International",
+    "url": "https://e.vnexpress.net/rss/news.rss",
+    "country": "Vietnam",
+    "language": "en",
+    "lat": 21.0278,
+    "lon": 105.8342,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Rappler - Philippines",
+    "url": "https://www.rappler.com/feed/",
+    "country": "Philippines",
+    "language": "en",
+    "lat": 14.5995,
+    "lon": 120.9842,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "NDTV - India",
+    "url": "https://feeds.feedburner.com/ndtvnews-top-stories",
+    "country": "India",
+    "language": "en",
+    "lat": 28.6139,
+    "lon": 77.2090,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Balkan Insight",
+    "url": "https://balkaninsight.com/feed/",
+    "country": "Serbia",
+    "language": "en",
+    "lat": 44.7866,
+    "lon": 20.4489,
+    "scope": "REGIONAL"
+  },
+  {
+    "name": "Kyiv Independent",
+    "url": "https://kyivindependent.com/feed/",
+    "country": "Ukraine",
+    "language": "en",
+    "lat": 50.4501,
+    "lon": 30.5234,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Politico EU",
+    "url": "https://www.politico.eu/feed/",
+    "country": "Belgium",
+    "language": "en",
+    "lat": 50.8476,
+    "lon": 4.3572,
+    "scope": "REGIONAL"
+  },
+  {
+    "name": "Tico Times - Costa Rica",
+    "url": "https://ticotimes.net/feed",
+    "country": "Costa Rica",
+    "language": "en",
+    "lat": 9.9281,
+    "lon": -84.0907,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Jamaica Observer",
+    "url": "https://www.jamaicaobserver.com/feed/",
+    "country": "Jamaica",
+    "language": "en",
+    "lat": 18.1096,
+    "lon": -77.2975,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Fiji Times",
+    "url": "https://www.fijitimes.com.fj/feed/",
+    "country": "Fiji",
+    "language": "en",
+    "lat": -18.1416,
+    "lon": 178.4419,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "The Local - Sweden",
+    "url": "https://www.thelocal.se/feed/",
+    "country": "Sweden",
+    "language": "en",
+    "lat": 59.3293,
+    "lon": 18.0686,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "The Local - Germany",
+    "url": "https://www.thelocal.de/feed/",
+    "country": "Germany",
+    "language": "en",
+    "lat": 52.5200,
+    "lon": 13.4050,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "The Local - France",
+    "url": "https://www.thelocal.fr/feed/",
+    "country": "France",
+    "language": "en",
+    "lat": 48.8566,
+    "lon": 2.3522,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Taipei Times",
+    "url": "https://www.taipeitimes.com/xml/rss.xml",
+    "country": "Taiwan",
+    "language": "en",
+    "lat": 25.0330,
+    "lon": 121.5654,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Dhaka Tribune - Bangladesh",
+    "url": "https://www.dhakatribune.com/rss.xml",
+    "country": "Bangladesh",
+    "language": "en",
+    "lat": 23.8103,
+    "lon": 90.4125,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Kathmandu Post - Nepal",
+    "url": "https://kathmandupost.com/rss",
+    "country": "Nepal",
+    "language": "en",
+    "lat": 27.7172,
+    "lon": 85.3240,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Colombo Gazette - Sri Lanka",
+    "url": "https://colombogazette.com/feed/",
+    "country": "Sri Lanka",
+    "language": "en",
+    "lat": 6.9271,
+    "lon": 79.8612,
+    "scope": "NATIONAL"
+  },
+  {
+    "name": "Al-Monitor - Middle East",
+    "url": "https://www.al-monitor.com/rss",
+    "country": "United States",
+    "language": "en",
+    "lat": 33.8869,
+    "lon": 35.5131,
+    "scope": "REGIONAL"
   }
 ]
