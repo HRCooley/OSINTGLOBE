@@ -149,18 +149,11 @@ class NewsRepositoryImpl @Inject constructor(
         // Determine country code for the viewing region
         val countryCode = getCountryCodeForLocation(centerLat, centerLon)
 
+        // Calculate altitude from bounds for GDELT query tuning
+        val altitudeKm = estimateAltitude(bounds)
+
         val gdeltDeferred = async {
-            try {
-                val query = buildGdeltQuery(bounds, category)
-                android.util.Log.d("GDELT", "Query: $query")
-                val response = gdeltApi.searchArticles(query = query)
-                response.articles?.map { article ->
-                    GdeltMapper.toDomain(article, centerLat, centerLon, null, null)
-                } ?: emptyList()
-            } catch (e: Exception) {
-                android.util.Log.d("GDELT", "Error: ${e.message}")
-                emptyList()
-            }
+            fetchGdeltStories(bounds, category, centerLat, centerLon, altitudeKm)
         }
 
         val gNewsDeferred = async {
@@ -274,17 +267,123 @@ class NewsRepositoryImpl @Inject constructor(
         }
     }
 
-    private fun buildGdeltQuery(bounds: GeoBounds, category: NewsCategory = NewsCategory.ALL): String {
-        val lat = (bounds.north + bounds.south) / 2
-        val lon = (bounds.east + bounds.west) / 2
-        val geoQuery = "near:${lat},${lon} within:500km"
+    /** Estimate altitude in km from view bounds (rough approximation). */
+    private fun estimateAltitude(bounds: GeoBounds): Double {
+        val latSpan = bounds.north - bounds.south
+        return latSpan * 111.0 // ~111 km per degree of latitude
+    }
 
-        if (category == NewsCategory.ALL || category.gdeltThemes.isEmpty()) {
-            return geoQuery
+    /** Determine GDELT timespan based on zoom level. Local news is sparse so search wider. */
+    private fun timespanForAltitude(altitudeKm: Double): String = when {
+        altitudeKm > 5000 -> "24h"
+        altitudeKm > 1000 -> "48h"
+        else -> "7d"
+    }
+
+    /** Determine maxrecords based on zoom level. */
+    private fun maxRecordsForAltitude(altitudeKm: Double): Int = when {
+        altitudeKm > 5000 -> 250
+        else -> 100
+    }
+
+    /**
+     * Fetch GDELT stories. At very high altitudes (>10,000 km), fires multiple
+     * targeted regional queries to ensure worldwide coverage. At lower altitudes,
+     * uses a single near/bbox query.
+     */
+    private suspend fun fetchGdeltStories(
+        bounds: GeoBounds,
+        category: NewsCategory,
+        centerLat: Double,
+        centerLon: Double,
+        altitudeKm: Double
+    ): List<NewsStory> = coroutineScope {
+        val timespan = timespanForAltitude(altitudeKm)
+        val maxRecords = maxRecordsForAltitude(altitudeKm)
+        val themeFilter = buildThemeFilter(category)
+
+        if (altitudeKm > 10_000) {
+            // Worldwide view: fire multiple targeted regional queries for coverage
+            val regionalQueries = listOf(
+                "near:38,-97 2000km" to "us",     // North America
+                "near:48,10 2000km" to null,       // Europe
+                "near:0,25 2000km" to null,        // Sub-Saharan Africa
+                "near:-15,-55 2000km" to null,     // South America
+                "near:15,100 2000km" to null,      // Southeast Asia
+                "near:35,65 2000km" to null,       // Central/South Asia
+                "near:30,35 1500km" to null,       // Middle East
+                "near:55,40 2000km" to null        // Russia/Central Asia
+            )
+
+            val deferredResults = regionalQueries.map { (geoQuery, _) ->
+                async {
+                    try {
+                        val fullQuery = if (themeFilter.isNotEmpty()) "$geoQuery AND ($themeFilter)" else geoQuery
+                        android.util.Log.d("GDELT", "Regional query: $fullQuery")
+                        val response = gdeltApi.searchArticles(
+                            query = fullQuery, maxRecords = 50, timespan = timespan
+                        )
+                        response.articles?.map { article ->
+                            GdeltMapper.toDomain(article, centerLat, centerLon, null, null)
+                        } ?: emptyList()
+                    } catch (e: Exception) {
+                        android.util.Log.d("GDELT", "Regional error: ${e.message}")
+                        emptyList()
+                    }
+                }
+            }
+            deferredResults.flatMap { it.await() }
+        } else {
+            // Single query for the current view area
+            try {
+                val geoQuery = buildGdeltGeoQuery(bounds, centerLat, centerLon, altitudeKm)
+                val fullQuery = if (themeFilter.isNotEmpty()) "$geoQuery AND ($themeFilter)" else geoQuery
+                android.util.Log.d("GDELT", "Query: $fullQuery, timespan=$timespan, max=$maxRecords")
+                val response = gdeltApi.searchArticles(
+                    query = fullQuery, maxRecords = maxRecords, timespan = timespan
+                )
+                response.articles?.map { article ->
+                    GdeltMapper.toDomain(article, centerLat, centerLon, null, null)
+                } ?: emptyList()
+            } catch (e: Exception) {
+                android.util.Log.d("GDELT", "Error: ${e.message}")
+                emptyList()
+            }
+        }
+    }
+
+    /** Build the geographic portion of a GDELT query. Uses near: for zoomed-in, expanded bbox otherwise. */
+    private fun buildGdeltGeoQuery(bounds: GeoBounds, centerLat: Double, centerLon: Double, altitudeKm: Double): String {
+        // For zoomed-in views, use near: with proportional radius
+        if (altitudeKm < 1000) {
+            val radiusKm = (altitudeKm * 0.5).coerceAtLeast(50.0).toInt()
+            return "near:${centerLat},${centerLon} ${radiusKm}km"
         }
 
-        val themeFilter = category.gdeltThemes.joinToString(" OR ") { "theme:$it" }
-        return "$geoQuery AND ($themeFilter)"
+        // Expand bbox by 20% on each side as a buffer
+        val latSpan = bounds.north - bounds.south
+        val lonSpan = bounds.east - bounds.west
+        val latBuffer = latSpan * 0.2
+        val lonBuffer = lonSpan * 0.2
+
+        val south = (bounds.south - latBuffer).coerceAtLeast(-90.0)
+        val north = (bounds.north + latBuffer).coerceAtMost(90.0)
+        val west = bounds.west - lonBuffer
+        val east = bounds.east + lonBuffer
+
+        // Handle antimeridian crossing - fall back to near: query
+        if (west > east || lonSpan > 300) {
+            val radiusKm = (altitudeKm * 0.4).coerceAtLeast(500.0).toInt()
+            return "near:${centerLat},${centerLon} ${radiusKm}km"
+        }
+
+        return "near:${centerLat},${centerLon} ${(altitudeKm * 0.4).toInt().coerceAtLeast(500)}km"
+    }
+
+    /** Build GDELT theme filter string from a category. */
+    private fun buildThemeFilter(category: NewsCategory): String {
+        if (category == NewsCategory.ALL || category.gdeltThemes.isEmpty()) return ""
+        return category.gdeltThemes.joinToString(" OR ") { "theme:$it" }
     }
 
     private suspend fun canMakeRequest(sourceId: String, maxRequests: Int, windowMs: Long): Boolean {

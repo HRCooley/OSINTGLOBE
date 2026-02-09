@@ -8,7 +8,7 @@ interface GdeltApiService {
     suspend fun searchArticles(
         @Query("query") query: String,
         @Query("mode") mode: String = "ArtList",
-        @Query("maxrecords") maxRecords: Int = 75,
+        @Query("maxrecords") maxRecords: Int = 250,
         @Query("format") format: String = "json",
         @Query("timespan") timespan: String = "24h",
         @Query("sort") sort: String = "DateDesc"
