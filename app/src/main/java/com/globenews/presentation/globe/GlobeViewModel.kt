@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.globenews.domain.model.EditorialScope
 import com.globenews.domain.model.LocationResult
+import com.globenews.domain.model.NewsCategory
 import com.globenews.domain.model.NewsStory
 import com.globenews.domain.usecase.BookmarkStoryUseCase
 import com.globenews.domain.usecase.GetStoriesByRegionUseCase
@@ -36,7 +37,8 @@ data class GlobeUiState(
     val scopeFilter: Set<EditorialScope> = EditorialScope.entries.toSet(),
     val baseLayer: String = "dark",
     val globeReady: Boolean = false,
-    val currentView: GlobeViewState = GlobeViewState()
+    val currentView: GlobeViewState = GlobeViewState(),
+    val selectedCategory: NewsCategory = NewsCategory.ALL
 )
 
 /**
@@ -45,6 +47,7 @@ data class GlobeUiState(
  * Responsibilities:
  * - Reacts to map camera movements by fetching stories for the visible region
  * - Manages editorial scope filtering (the use case selects scopes by altitude)
+ * - Manages news category filtering (GDELT themes + client-side keywords)
  * - Handles search queries (location geocoding + full-text story search)
  * - Manages story selection, bookmarking, and base layer switching
  *
@@ -133,6 +136,11 @@ class GlobeViewModel @Inject constructor(
         loadStoriesForCurrentView()
     }
 
+    fun setCategory(category: NewsCategory) {
+        _uiState.value = _uiState.value.copy(selectedCategory = category)
+        loadStoriesForCurrentView()
+    }
+
     fun setBaseLayer(layer: String) {
         _uiState.value = _uiState.value.copy(baseLayer = layer)
     }
@@ -166,7 +174,7 @@ class GlobeViewModel @Inject constructor(
 
             _uiState.value = _uiState.value.copy(isLoading = true)
 
-            getStoriesByRegion(bounds, view.altitude)
+            getStoriesByRegion(bounds, view.altitude, category = _uiState.value.selectedCategory)
                 .catch { e ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,

@@ -3,20 +3,22 @@ package com.globenews.presentation.globe
 import android.webkit.WebView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,6 +44,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.globenews.domain.model.EditorialScope
+import com.globenews.domain.model.NewsCategory
 import com.globenews.presentation.search.SearchBar
 import com.globenews.presentation.storydetail.StoryDetailSheet
 
@@ -52,13 +55,10 @@ import com.globenews.presentation.storydetail.StoryDetailSheet
  * 1. [GlobeWebView] — Leaflet.js map filling the entire screen
  * 2. Floating top bar — search bar + settings/bookmarks icons
  * 3. Loading indicator — shown while fetching stories
- * 4. Bottom-left — editorial scope filter chips (Intl/Natl/Regional/Local)
- * 5. Bottom-right — tile layer toggle (Dark/Satellite/Street)
- * 6. [ModalBottomSheet] — story detail sheet (shown when a marker is tapped)
- *
- * Stories are pushed to the map via [GlobeBridge.addMarkers] whenever
- * [GlobeUiState.stories] changes. The JavaScript side handles incremental
- * diffing so we don't need to call clearMarkers() first.
+ * 4. Category chips — horizontally scrollable row for news category filtering
+ * 5. Bottom-left — editorial scope filter chips (Intl/Natl/Regional/Local)
+ * 6. Bottom-right — tile layer toggle (Dark/Satellite/Street)
+ * 7. [ModalBottomSheet] — story detail sheet (shown when a marker is tapped)
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -164,6 +164,15 @@ fun GlobeScreen(
             )
         }
 
+        // Category filter chips (horizontally scrollable)
+        CategoryChips(
+            selectedCategory = uiState.selectedCategory,
+            onCategorySelected = { viewModel.setCategory(it) },
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(start = 8.dp, bottom = 68.dp)
+        )
+
         // Bottom controls
         Column(
             modifier = Modifier
@@ -212,6 +221,36 @@ fun GlobeScreen(
                     onDismiss = { viewModel.dismissStoryDetail() }
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun CategoryChips(
+    selectedCategory: NewsCategory,
+    onCategorySelected: (NewsCategory) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        modifier = modifier
+            .horizontalScroll(rememberScrollState())
+            .clip(RoundedCornerShape(20.dp))
+            .background(Color.Black.copy(alpha = 0.5f))
+            .padding(horizontal = 6.dp, vertical = 2.dp)
+    ) {
+        NewsCategory.entries.forEach { category ->
+            FilterChip(
+                selected = category == selectedCategory,
+                onClick = { onCategorySelected(category) },
+                label = { Text(category.displayName, style = MaterialTheme.typography.labelSmall) },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.8f),
+                    selectedLabelColor = Color.White,
+                    labelColor = Color.White.copy(alpha = 0.7f)
+                ),
+                modifier = Modifier.height(32.dp)
+            )
         }
     }
 }
