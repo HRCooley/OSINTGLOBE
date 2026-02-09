@@ -47,12 +47,14 @@ class GetStoriesByRegionUseCaseTest {
     }
 
     @Test
-    fun `high altitude fetches INTERNATIONAL scope only`() = runTest {
+    fun `high altitude fetches INTERNATIONAL and NATIONAL scopes`() = runTest {
+        val expectedScopes = setOf(EditorialScope.INTERNATIONAL, EditorialScope.NATIONAL)
         val stories = listOf(createStory(EditorialScope.INTERNATIONAL))
         every {
             newsRepository.getStoriesByRegion(
                 testBounds,
-                setOf(EditorialScope.INTERNATIONAL),
+                expectedScopes,
+                20000.0,
                 false
             )
         } returns flowOf(Result.success(stories))
@@ -64,51 +66,52 @@ class GetStoriesByRegionUseCaseTest {
         verify {
             newsRepository.getStoriesByRegion(
                 testBounds,
-                setOf(EditorialScope.INTERNATIONAL),
+                expectedScopes,
+                20000.0,
                 false
             )
         }
     }
 
     @Test
-    fun `mid altitude fetches INTERNATIONAL and NATIONAL scopes`() = runTest {
-        val expectedScopes = setOf(EditorialScope.INTERNATIONAL, EditorialScope.NATIONAL)
+    fun `mid altitude fetches INTERNATIONAL NATIONAL and REGIONAL scopes`() = runTest {
+        val expectedScopes = setOf(EditorialScope.INTERNATIONAL, EditorialScope.NATIONAL, EditorialScope.REGIONAL)
         every {
-            newsRepository.getStoriesByRegion(testBounds, expectedScopes, false)
+            newsRepository.getStoriesByRegion(testBounds, expectedScopes, 8000.0, false)
         } returns flowOf(Result.success(emptyList()))
 
         useCase(testBounds, 8000.0).toList()
 
         verify {
-            newsRepository.getStoriesByRegion(testBounds, expectedScopes, false)
+            newsRepository.getStoriesByRegion(testBounds, expectedScopes, 8000.0, false)
         }
     }
 
     @Test
-    fun `low altitude fetches NATIONAL and REGIONAL scopes`() = runTest {
-        val expectedScopes = setOf(EditorialScope.NATIONAL, EditorialScope.REGIONAL)
+    fun `low altitude fetches all scopes`() = runTest {
+        val expectedScopes = EditorialScope.entries.toSet()
         every {
-            newsRepository.getStoriesByRegion(testBounds, expectedScopes, false)
+            newsRepository.getStoriesByRegion(testBounds, expectedScopes, 2000.0, false)
         } returns flowOf(Result.success(emptyList()))
 
         useCase(testBounds, 2000.0).toList()
 
         verify {
-            newsRepository.getStoriesByRegion(testBounds, expectedScopes, false)
+            newsRepository.getStoriesByRegion(testBounds, expectedScopes, 2000.0, false)
         }
     }
 
     @Test
-    fun `very low altitude fetches REGIONAL and LOCAL scopes`() = runTest {
-        val expectedScopes = setOf(EditorialScope.REGIONAL, EditorialScope.LOCAL)
+    fun `very low altitude fetches all scopes`() = runTest {
+        val expectedScopes = EditorialScope.entries.toSet()
         every {
-            newsRepository.getStoriesByRegion(testBounds, expectedScopes, false)
+            newsRepository.getStoriesByRegion(testBounds, expectedScopes, 300.0, false)
         } returns flowOf(Result.success(emptyList()))
 
         useCase(testBounds, 300.0).toList()
 
         verify {
-            newsRepository.getStoriesByRegion(testBounds, expectedScopes, false)
+            newsRepository.getStoriesByRegion(testBounds, expectedScopes, 300.0, false)
         }
     }
 }
