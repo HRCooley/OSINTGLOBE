@@ -10,9 +10,11 @@ import com.globenews.data.mapper.EntityMapper
 import com.globenews.data.mapper.GdeltMapper
 import com.globenews.data.mapper.GNewsMapper
 import com.globenews.data.mapper.NewsApiMapper
+import com.globenews.data.source.geocoding.NominatimService
 import com.globenews.data.source.local.FallbackNewsLoader
 import com.globenews.data.source.remote.gdelt.GdeltApiService
 import com.globenews.data.source.remote.gnews.GNewsApiService
+import com.globenews.data.source.remote.googlenews.GoogleNewsRssSource
 import com.globenews.data.source.remote.newsapi.NewsApiService
 import com.globenews.data.source.remote.rss.RssFeedLoader
 import com.globenews.data.source.remote.rss.RssParser
@@ -64,7 +66,9 @@ class NewsRepositoryImpl @Inject constructor(
     private val rssFeedLoader: RssFeedLoader,
     private val fallbackLoader: FallbackNewsLoader,
     private val okHttpClient: OkHttpClient,
-    private val apiKeys: ApiKeyProvider
+    private val apiKeys: ApiKeyProvider,
+    private val nominatimService: NominatimService,
+    private val googleNewsRssSource: GoogleNewsRssSource
 ) : NewsRepository {
 
     private val rssParser = RssParser()
@@ -209,11 +213,32 @@ class NewsRepositoryImpl @Inject constructor(
             stories
         }
 
+        // Google News RSS: only when zoomed in (altitude < 1000km)
+        val googleNewsDeferred = async {
+            if (altitudeKm >= 1000) return@async emptyList()
+            try {
+                val locationName = reverseGeocode(centerLat, centerLon)
+                if (locationName.isBlank()) return@async emptyList()
+                val cc = getCountryCodeForLocation(centerLat, centerLon)
+                var stories = withContext(Dispatchers.IO) {
+                    googleNewsRssSource.fetchForLocation(locationName, cc, centerLat, centerLon)
+                }
+                if (category != NewsCategory.ALL) {
+                    stories = stories.filter { NewsCategory.matchesCategory(category, it.title, it.summary) }
+                }
+                stories
+            } catch (e: Exception) {
+                android.util.Log.d("GoogleNews", "Deferred error: ${e.message}")
+                emptyList()
+            }
+        }
+
         val allStories = mutableListOf<NewsStory>()
         allStories.addAll(gdeltDeferred.await())
         allStories.addAll(gNewsDeferred.await())
         allStories.addAll(newsApiDeferred.await())
         allStories.addAll(rssDeferred.await())
+        allStories.addAll(googleNewsDeferred.await())
         allStories
     }
 
@@ -378,6 +403,21 @@ class NewsRepositoryImpl @Inject constructor(
         }
 
         return "near:${centerLat},${centerLon} ${(altitudeKm * 0.4).toInt().coerceAtLeast(500)}km"
+    }
+
+    /**
+     * Reverse-geocode a lat/lon to a place name using Nominatim.
+     * Returns city > town > village > state, or empty string if unavailable.
+     */
+    private suspend fun reverseGeocode(lat: Double, lon: Double): String {
+        return try {
+            val result = nominatimService.reverse(latitude = lat, longitude = lon)
+            val addr = result.address
+            addr?.city ?: addr?.town ?: addr?.village ?: addr?.state ?: ""
+        } catch (e: Exception) {
+            android.util.Log.d("Geocode", "Reverse geocode failed: ${e.message}")
+            ""
+        }
     }
 
     /** Build GDELT theme filter string from a category. */
