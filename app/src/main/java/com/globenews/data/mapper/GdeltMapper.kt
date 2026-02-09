@@ -6,6 +6,8 @@ import com.globenews.domain.model.NewsStory
 import com.globenews.domain.model.SourceAttribution
 import com.globenews.domain.model.StoryLocation
 import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.util.UUID
@@ -53,8 +55,8 @@ object GdeltMapper {
 
     private fun parseGdeltDate(dateStr: String): Instant {
         return try {
-            Instant.from(gdeltDateFormat.parse(dateStr))
-        } catch (e: DateTimeParseException) {
+            LocalDateTime.parse(dateStr, gdeltDateFormat).toInstant(ZoneOffset.UTC)
+        } catch (e: Exception) {
             try {
                 Instant.parse(dateStr)
             } catch (e2: Exception) {
