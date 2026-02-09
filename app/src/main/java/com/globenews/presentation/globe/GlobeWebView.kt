@@ -15,8 +15,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
-import java.io.BufferedReader
-import java.io.InputStreamReader
 
 data class GlobeViewState(
     val lat: Double = 0.0,
@@ -107,27 +105,7 @@ fun GlobeWebView(
 
                 onWebViewCreated(this)
 
-                // Read HTML from assets and load directly to avoid file:// URL issues
-                try {
-                    val inputStream = ctx.assets.open("globe.html")
-                    val reader = BufferedReader(InputStreamReader(inputStream))
-                    val html = reader.readText()
-                    reader.close()
-                    loadDataWithBaseURL(
-                        "file:///android_asset/",
-                        html,
-                        "text/html",
-                        "UTF-8",
-                        null
-                    )
-                } catch (e: Exception) {
-                    Log.e("GlobeWebView", "Failed to load globe.html", e)
-                    loadData(
-                        "<html><body style='background:#000'><p style='color:red;text-align:center;padding-top:40%'>Failed to load globe: ${e.message}</p></body></html>",
-                        "text/html",
-                        "UTF-8"
-                    )
-                }
+                loadUrl("file:///android_asset/globe.html")
             }
         }
     )
