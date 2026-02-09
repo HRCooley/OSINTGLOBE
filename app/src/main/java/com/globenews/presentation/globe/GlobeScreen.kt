@@ -58,10 +58,9 @@ fun GlobeScreen(
     val globeBridge = remember { mutableStateOf<GlobeBridge?>(null) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
 
-    // Update markers when stories change
+    // Update markers when stories change (incremental - JS handles diff)
     LaunchedEffect(uiState.stories, uiState.globeReady) {
         if (uiState.globeReady) {
-            globeBridge.value?.clearMarkers()
             globeBridge.value?.addMarkers(uiState.stories)
         }
     }

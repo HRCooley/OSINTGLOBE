@@ -13,21 +13,21 @@
             width: 100%; height: 100%; overflow: hidden;
             background: #0d1117;
         }
-        /* Dark theme for cluster markers */
+        /* Cluster markers - dark theme */
         .marker-cluster-small {
-            background-color: rgba(255, 68, 68, 0.6);
+            background-color: rgba(255, 68, 68, 0.5);
         }
         .marker-cluster-small div {
             background-color: rgba(255, 68, 68, 0.8);
         }
         .marker-cluster-medium {
-            background-color: rgba(255, 153, 68, 0.6);
+            background-color: rgba(255, 153, 68, 0.5);
         }
         .marker-cluster-medium div {
             background-color: rgba(255, 153, 68, 0.8);
         }
         .marker-cluster-large {
-            background-color: rgba(68, 136, 255, 0.6);
+            background-color: rgba(68, 136, 255, 0.5);
         }
         .marker-cluster-large div {
             background-color: rgba(68, 136, 255, 0.8);
@@ -41,25 +41,97 @@
         .marker-cluster {
             background-clip: padding-box; border-radius: 20px;
         }
-        /* Hide Leaflet attribution for cleaner UI (credit in code) */
-        .leaflet-control-attribution {
-            display: none !important;
-        }
-        /* Custom dot markers */
+        .leaflet-control-attribution { display: none !important; }
+        /* News dot markers */
         .news-dot {
             border-radius: 50%;
-            border: 1px solid rgba(255,255,255,0.5);
+            border: 1.5px solid rgba(255,255,255,0.6);
+            box-shadow: 0 0 4px rgba(0,0,0,0.5);
+            transition: transform 0.15s ease;
         }
         .news-dot-international { background: rgba(255, 68, 68, 0.9); }
         .news-dot-national { background: rgba(255, 153, 68, 0.9); }
         .news-dot-regional { background: rgba(68, 136, 255, 0.9); }
-        .news-dot-local { background: rgba(68, 136, 255, 0.9); }
+        .news-dot-local { background: rgba(68, 200, 120, 0.9); }
         /* Zoom controls dark theme */
         .leaflet-control-zoom a {
             background: rgba(0,0,0,0.7) !important;
             color: #fff !important;
             border-color: rgba(255,255,255,0.2) !important;
         }
+        /* Cluster article list popup */
+        .cluster-popup .leaflet-popup-content-wrapper {
+            background: rgba(15, 18, 25, 0.95);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+        }
+        .cluster-popup .leaflet-popup-tip {
+            background: rgba(15, 18, 25, 0.95);
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+        .cluster-popup .leaflet-popup-content {
+            margin: 0; padding: 0; width: 240px !important;
+        }
+        .cluster-list {
+            max-height: 280px; overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .cluster-list-header {
+            padding: 10px 12px 6px;
+            font: bold 11px sans-serif;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .cluster-item {
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .cluster-item:active {
+            background: rgba(255,255,255,0.1);
+        }
+        .cluster-item:last-child { border-bottom: none; }
+        .cluster-item-title {
+            font: 13px/1.3 sans-serif;
+            color: #e0e0e0;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .cluster-item-meta {
+            font: 11px sans-serif;
+            color: rgba(255,255,255,0.4);
+            margin-top: 3px;
+        }
+        .cluster-item-scope {
+            display: inline-block;
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+        .scope-international { background: #ff4444; }
+        .scope-national { background: #ff9944; }
+        .scope-regional { background: #4488ff; }
+        .scope-local { background: #44c878; }
+        /* Single marker tooltip */
+        .news-tooltip {
+            background: rgba(15, 18, 25, 0.92);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px;
+            color: #e0e0e0;
+            font: 12px/1.3 sans-serif;
+            padding: 6px 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            max-width: 200px;
+        }
+        .news-tooltip .leaflet-tooltip-left::before { border-left-color: rgba(15,18,25,0.92); }
+        .news-tooltip .leaflet-tooltip-right::before { border-right-color: rgba(15,18,25,0.92); }
     </style>
 </head>
 <body>
@@ -95,9 +167,14 @@
 
     // ---- Marker clustering ----
     var clusterGroup = L.markerClusterGroup({
-        maxClusterRadius: 40,
-        spiderfyOnMaxZoom: true,
+        maxClusterRadius: 45,
+        spiderfyOnMaxZoom: false,
+        disableClusteringAtZoom: 16,
         showCoverageOnHover: false,
+        zoomToBoundsOnClick: false,
+        removeOutsideVisibleBounds: true,
+        animate: true,
+        animateAddingMarkers: false,
         iconCreateFunction: function(cluster) {
             var count = cluster.getChildCount();
             var size = count < 10 ? 'small' : (count < 50 ? 'medium' : 'large');
@@ -112,15 +189,88 @@
 
     // ---- State ----
     var markers = {};
+    var markerData = {};
     var isReady = false;
 
-    // Scope colors for dot markers
     var SCOPE_CLASSES = {
         'INTERNATIONAL': 'news-dot-international',
         'NATIONAL': 'news-dot-national',
         'REGIONAL': 'news-dot-regional',
         'LOCAL': 'news-dot-local'
     };
+
+    // ---- Cluster click → show article list popup ----
+    clusterGroup.on('clusterclick', function(e) {
+        var cluster = e.layer;
+        var children = cluster.getAllChildMarkers();
+        var latlng = e.latlng;
+
+        // If very few markers and zoomed in, just zoom
+        if (children.length <= 3 && map.getZoom() < 14) {
+            cluster.zoomToBounds({ padding: [30, 30] });
+            return;
+        }
+
+        // Build article list HTML
+        var html = '<div class="cluster-list">';
+        html += '<div class="cluster-list-header">' + children.length + ' stories</div>';
+
+        // Sort by recency
+        children.sort(function(a, b) {
+            var da = markerData[a.storyId];
+            var db = markerData[b.storyId];
+            return (db ? db.publishedAt : 0) - (da ? da.publishedAt : 0);
+        });
+
+        // Show up to 20 stories
+        var shown = Math.min(children.length, 20);
+        for (var i = 0; i < shown; i++) {
+            var data = markerData[children[i].storyId];
+            if (!data) continue;
+
+            var scopeClass = 'scope-' + (data.scope || 'national').toLowerCase();
+            var source = data.sourceName || '';
+            var timeStr = formatTimeAgo(data.publishedAt);
+
+            html += '<div class="cluster-item" ontouchstart="" onclick="onClusterItemTap(\'' + data.id.replace(/'/g, "\\'") + '\')">';
+            html += '<div class="cluster-item-title">';
+            html += '<span class="cluster-item-scope ' + scopeClass + '"></span>';
+            html += escapeHtml(data.title || 'Untitled');
+            html += '</div>';
+            html += '<div class="cluster-item-meta">' + escapeHtml(source) + (source && timeStr ? ' · ' : '') + timeStr + '</div>';
+            html += '</div>';
+        }
+
+        if (children.length > shown) {
+            html += '<div class="cluster-list-header" style="text-align:center;border-top:1px solid rgba(255,255,255,0.1);border-bottom:none">Zoom in for ' + (children.length - shown) + ' more</div>';
+        }
+
+        html += '</div>';
+
+        L.popup({ className: 'cluster-popup', maxWidth: 260, minWidth: 240, closeButton: true })
+            .setLatLng(latlng)
+            .setContent(html)
+            .openOn(map);
+    });
+
+    function onClusterItemTap(storyId) {
+        map.closePopup();
+        if (typeof AndroidBridge !== 'undefined') {
+            AndroidBridge.onMarkerTap(storyId);
+        }
+    }
+
+    function formatTimeAgo(ts) {
+        if (!ts) return '';
+        var hours = (Date.now() - ts) / 3600000;
+        if (hours < 1) return Math.floor(hours * 60) + 'm ago';
+        if (hours < 24) return Math.floor(hours) + 'h ago';
+        return Math.floor(hours / 24) + 'd ago';
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
 
     // ---- Camera move listener ----
     var moveTimeout = null;
@@ -139,36 +289,31 @@
         AndroidBridge.onReady();
     }
 
-    // ---- API functions called from Android ----
+    // ---- API: Incremental marker updates ----
     function addMarkers(jsonArrayString) {
         try {
             var items = JSON.parse(jsonArrayString);
-            var zoom = map.getZoom();
+            var newIds = {};
+            var toAdd = [];
 
             items.forEach(function(item) {
-                // Remove existing marker with same ID
-                if (markers[item.id]) {
-                    clusterGroup.removeLayer(markers[item.id]);
-                }
+                newIds[item.id] = true;
+                markerData[item.id] = item;
 
-                // Determine dot size based on recency
-                var hoursAgo = (Date.now() - (item.publishedAt || Date.now())) / 3600000;
-                var dotSize = hoursAgo < 6 ? 12 : (hoursAgo < 24 ? 9 : 7);
-                if (zoom > 12) dotSize = 14;
-                else if (zoom < 4) dotSize = 6;
+                // Skip if already on map
+                if (markers[item.id]) return;
 
                 var scopeClass = SCOPE_CLASSES[item.scope] || SCOPE_CLASSES['NATIONAL'];
-
                 var icon = L.divIcon({
                     className: 'news-dot ' + scopeClass,
-                    iconSize: [dotSize, dotSize]
+                    iconSize: [10, 10]
                 });
 
                 var marker = L.marker([item.lat, item.lon], { icon: icon });
 
-                // Bind popup with title
+                // Tooltip with title
                 if (item.title) {
-                    marker.bindTooltip(item.title.substring(0, 60), {
+                    marker.bindTooltip(item.title.substring(0, 80), {
                         direction: 'top',
                         offset: [0, -8],
                         className: 'news-tooltip'
@@ -184,8 +329,26 @@
 
                 marker.storyId = item.id;
                 markers[item.id] = marker;
-                clusterGroup.addLayer(marker);
+                toAdd.push(marker);
             });
+
+            // Remove markers not in the new set
+            var toRemove = [];
+            Object.keys(markers).forEach(function(id) {
+                if (!newIds[id]) {
+                    toRemove.push(markers[id]);
+                    delete markers[id];
+                    delete markerData[id];
+                }
+            });
+
+            // Batch updates for performance
+            if (toRemove.length > 0) {
+                clusterGroup.removeLayers(toRemove);
+            }
+            if (toAdd.length > 0) {
+                clusterGroup.addLayers(toAdd);
+            }
         } catch (e) {
             console.error('addMarkers error:', e);
         }
@@ -194,10 +357,10 @@
     function clearMarkers() {
         clusterGroup.clearLayers();
         markers = {};
+        markerData = {};
     }
 
     function flyTo(lat, lon, altitudeKm) {
-        // Convert altitude (km) to approximate zoom level
         var zoom;
         if (altitudeKm > 10000) zoom = 3;
         else if (altitudeKm > 5000) zoom = 4;
@@ -215,8 +378,6 @@
         var center = map.getCenter();
         var bounds = map.getBounds();
         var zoom = map.getZoom();
-
-        // Approximate altitude from zoom level (rough conversion)
         var altitude = 40000 / Math.pow(2, zoom - 1);
 
         return JSON.stringify({
@@ -233,12 +394,9 @@
     }
 
     function setBaseLayer(providerName) {
-        // Remove current layer
         if (layers[currentLayer]) {
             map.removeLayer(layers[currentLayer]);
         }
-
-        // Add new layer
         var layerName = layers[providerName] ? providerName : 'dark';
         map.addLayer(layers[layerName]);
         currentLayer = layerName;
@@ -247,7 +405,6 @@
     function highlightMarker(id) {
         if (!markers[id]) return;
         var marker = markers[id];
-        // Flash the marker by toggling opacity
         var el = marker.getElement();
         if (el) {
             var n = 0;
