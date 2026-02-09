@@ -4,13 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GlobeNews</title>
-    <script src="https://cesium.com/downloads/cesiumjs/releases/1.124/Build/Cesium/Cesium.js"></script>
-    <link href="https://cesium.com/downloads/cesiumjs/releases/1.124/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
     <style>
         html, body, #cesiumContainer {
             width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
             background: #000;
         }
+        #statusMsg {
+            position: absolute; top: 40%; left: 0; right: 0;
+            text-align: center; color: #888; font-family: sans-serif; font-size: 14px;
+            padding: 20px; z-index: 10;
+        }
+        #statusMsg.error { color: #ff4444; }
         .cesium-viewer-bottom, .cesium-viewer-toolbar,
         .cesium-viewer-animationContainer, .cesium-viewer-timelineContainer,
         .cesium-viewer-fullscreenContainer, .cesium-viewer-infoBoxContainer,
@@ -23,38 +27,68 @@
     </style>
 </head>
 <body>
-<div id="cesiumContainer"></div>
+<div id="cesiumContainer">
+    <div id="statusMsg">Loading globe...</div>
+</div>
+
 <script>
-    // Scope colors
-    const SCOPE_COLORS = {
-        'INTERNATIONAL': Cesium.Color.fromCssColorString('#ff4444').withAlpha(0.9),
-        'NATIONAL': Cesium.Color.fromCssColorString('#ff9944').withAlpha(0.9),
-        'REGIONAL': Cesium.Color.fromCssColorString('#4488ff').withAlpha(0.9),
-        'LOCAL': Cesium.Color.fromCssColorString('#4488ff').withAlpha(0.9)
+    // Global error handler
+    window.onerror = function(msg, src, line, col, err) {
+        showError('JS Error: ' + msg);
+        return false;
     };
 
-    let viewer = null;
-    let markers = {};
-    let cameraMoveTimeout = null;
-    let isReady = false;
+    function showError(msg) {
+        var el = document.getElementById('statusMsg');
+        if (el) {
+            el.className = 'error';
+            el.textContent = msg;
+        }
+        console.error(msg);
+    }
+
+    function showStatus(msg) {
+        var el = document.getElementById('statusMsg');
+        if (el) el.textContent = msg;
+    }
+</script>
+
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.124/Build/Cesium/Cesium.js"
+        onerror="showError('Failed to load Cesium.js from CDN. Check internet connection.')"></script>
+<link href="https://cesium.com/downloads/cesiumjs/releases/1.124/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+
+<script>
+    var SCOPE_COLORS = {};
+    var viewer = null;
+    var markers = {};
+    var cameraMoveTimeout = null;
+    var isReady = false;
+
+    function initScopeColors() {
+        SCOPE_COLORS = {
+            'INTERNATIONAL': Cesium.Color.fromCssColorString('#ff4444').withAlpha(0.9),
+            'NATIONAL': Cesium.Color.fromCssColorString('#ff9944').withAlpha(0.9),
+            'REGIONAL': Cesium.Color.fromCssColorString('#4488ff').withAlpha(0.9),
+            'LOCAL': Cesium.Color.fromCssColorString('#4488ff').withAlpha(0.9)
+        };
+    }
 
     function initViewer(ionToken) {
+        if (typeof Cesium === 'undefined') {
+            showError('Cesium library not loaded. Check internet connection.');
+            return;
+        }
+
         try {
+            showStatus('Initializing globe...');
+            initScopeColors();
+
             if (ionToken && ionToken.length > 0) {
                 Cesium.Ion.defaultAccessToken = ionToken;
             }
 
-            // Create dark base layer up front
-            var darkLayer = new Cesium.ImageryLayer(
-                new Cesium.UrlTemplateImageryProvider({
-                    url: 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-                    credit: 'CartoDB',
-                    maximumLevel: 18
-                })
-            );
-
             viewer = new Cesium.Viewer('cesiumContainer', {
-                baseLayer: darkLayer,
+                baseLayer: false,
                 baseLayerPicker: false,
                 geocoder: false,
                 homeButton: false,
@@ -72,6 +106,15 @@
                 requestRenderMode: false,
                 maximumRenderTimeChange: Infinity
             });
+
+            // Add dark base layer
+            viewer.imageryLayers.addImageryProvider(
+                new Cesium.UrlTemplateImageryProvider({
+                    url: 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+                    credit: 'CartoDB',
+                    maximumLevel: 18
+                })
+            );
 
             // Disable terrain
             viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
@@ -111,15 +154,17 @@
                 }
             }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
+            // Hide status message on success
+            var statusEl = document.getElementById('statusMsg');
+            if (statusEl) statusEl.style.display = 'none';
+
             isReady = true;
             if (typeof AndroidBridge !== 'undefined') {
                 AndroidBridge.onReady();
             }
         } catch (e) {
-            console.error('initViewer failed:', e);
-            document.getElementById('cesiumContainer').innerHTML =
-                '<p style="color:#ff4444;padding:20px;font-family:sans-serif;">' +
-                'Globe failed to load: ' + e.message + '</p>';
+            showError('Globe init failed: ' + e.message);
+            console.error('initViewer error:', e);
         }
     }
 
@@ -239,7 +284,6 @@
                         ionPromise.then(function(p) {
                             viewer.imageryLayers.addImageryProvider(p);
                         }).catch(function() {
-                            // Fall back to ArcGIS if Ion fails
                             viewer.imageryLayers.addImageryProvider(
                                 new Cesium.UrlTemplateImageryProvider({
                                     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
@@ -297,8 +341,12 @@
     // Initialize on load
     window.addEventListener('load', function() {
         var token = '';
-        if (typeof AndroidBridge !== 'undefined' && AndroidBridge.getCesiumToken) {
-            token = AndroidBridge.getCesiumToken();
+        try {
+            if (typeof AndroidBridge !== 'undefined' && AndroidBridge.getCesiumToken) {
+                token = AndroidBridge.getCesiumToken();
+            }
+        } catch(e) {
+            console.error('Failed to get token:', e);
         }
         initViewer(token);
     });

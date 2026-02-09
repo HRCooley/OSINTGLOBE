@@ -2,6 +2,7 @@ package com.globenews.presentation.globe
 
 import android.annotation.SuppressLint
 import android.util.Log
+import android.view.View
 import android.view.ViewGroup
 import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
@@ -74,6 +75,8 @@ fun GlobeWebView(
                     displayZoomControls = false
                 }
 
+                // Hardware acceleration required for WebGL (Cesium)
+                setLayerType(View.LAYER_TYPE_HARDWARE, null)
                 setBackgroundColor(0xFF000000.toInt())
 
                 addJavascriptInterface(bridge, "AndroidBridge")
