@@ -20,6 +20,10 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * Immutable UI state for the globe screen. Collected by GlobeScreen as a
+ * StateFlow and used to drive Compose recomposition and WebView updates.
+ */
 data class GlobeUiState(
     val stories: List<NewsStory> = emptyList(),
     val selectedStory: NewsStory? = null,
@@ -35,6 +39,19 @@ data class GlobeUiState(
     val currentView: GlobeViewState = GlobeViewState()
 )
 
+/**
+ * ViewModel for the globe (map) screen.
+ *
+ * Responsibilities:
+ * - Reacts to map camera movements by fetching stories for the visible region
+ * - Manages editorial scope filtering (the use case selects scopes by altitude)
+ * - Handles search queries (location geocoding + full-text story search)
+ * - Manages story selection, bookmarking, and base layer switching
+ *
+ * The [fetchJob] is cancelled and restarted on every camera move so that only
+ * the latest visible region is fetched. The [searchJob] is debounced by 300ms
+ * to avoid excessive API calls during typing.
+ */
 @HiltViewModel
 class GlobeViewModel @Inject constructor(
     private val getStoriesByRegion: GetStoriesByRegionUseCase,

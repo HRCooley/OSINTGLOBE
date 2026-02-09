@@ -1,5 +1,6 @@
 package com.globenews.core.common
 
+/** App-wide configuration constants. Cache TTLs are in hours, debounce values in milliseconds. */
 object Constants {
     const val DATABASE_NAME = "globenews_db"
     const val FALLBACK_NEWS_FILE = "fallback_news.json"

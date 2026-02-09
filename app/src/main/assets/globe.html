@@ -1,3 +1,26 @@
+<!--
+  GlobeNews Interactive Map
+  =========================
+  Leaflet.js-based 2D map with MarkerCluster for news story visualization.
+  Loaded inside an Android WebView and communicates with Kotlin via the
+  AndroidBridge JavaScript interface (see GlobeWebView.kt).
+
+  Originally built with CesiumJS (3D globe), but switched to Leaflet due to
+  a WebGL draw-call compositing bug in Android WebView + Jetpack Compose.
+  See PRODUCTION_JOURNAL.md for details.
+
+  JavaScript API (called from GlobeBridge.kt):
+    addMarkers(jsonArrayString) - Incrementally add/remove markers (diff-based)
+    clearMarkers()              - Remove all markers
+    flyTo(lat, lon, altitudeKm) - Animate to a location (altitude → zoom mapping)
+    setBaseLayer(name)          - Switch tile layer (dark|satellite|streets)
+    highlightMarker(id)         - Flash a marker to draw attention
+
+  Callbacks to Kotlin (via AndroidBridge):
+    AndroidBridge.onReady()             - Map initialized
+    AndroidBridge.onMarkerTap(storyId)  - User tapped a story marker
+    AndroidBridge.onCameraMove(json)    - User panned/zoomed (debounced 400ms)
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -142,6 +165,9 @@
 
 <script>
     // ---- Tile layers ----
+    // Three base map options: dark (default, matches app theme), satellite
+    // (Esri World Imagery), and streets (OpenStreetMap). Switched via
+    // setBaseLayer() called from GlobeBridge.kt.
     var layers = {
         dark: L.tileLayer('https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
             attribution: 'CartoDB', maxZoom: 20, subdomains: 'abcd'
@@ -166,6 +192,9 @@
     var currentLayer = 'dark';
 
     // ---- Marker clustering ----
+    // Spiderfy is disabled — tapping a cluster shows a scrollable article list
+    // popup instead (see clusterclick handler below). This is more touch-friendly
+    // than the default spiderfy behavior on mobile screens.
     var clusterGroup = L.markerClusterGroup({
         maxClusterRadius: 45,
         spiderfyOnMaxZoom: false,
@@ -188,6 +217,9 @@
     map.addLayer(clusterGroup);
 
     // ---- State ----
+    // markers: { storyId → L.marker } — currently rendered Leaflet markers
+    // markerData: { storyId → raw item object } — stored for popup rendering
+    // Both dictionaries are maintained by the incremental addMarkers() function.
     var markers = {};
     var markerData = {};
     var isReady = false;
@@ -290,6 +322,10 @@
     }
 
     // ---- API: Incremental marker updates ----
+    // Diff-based: compares incoming story IDs against existing markers.
+    // Only adds new markers and removes stale ones. This eliminates the
+    // flicker that occurred when clearing and rebuilding all markers on
+    // every camera move. Uses batch addLayers/removeLayers for performance.
     function addMarkers(jsonArrayString) {
         try {
             var items = JSON.parse(jsonArrayString);
@@ -360,6 +396,10 @@
         markerData = {};
     }
 
+    // Converts altitude (km) to Leaflet zoom level and animates the map.
+    // The altitude concept is inherited from the original CesiumJS 3D design —
+    // the ViewModel and use cases still think in terms of altitude, so we
+    // translate here at the rendering boundary.
     function flyTo(lat, lon, altitudeKm) {
         var zoom;
         if (altitudeKm > 10000) zoom = 3;
@@ -374,6 +414,9 @@
         map.flyTo([lat, lon], zoom, { duration: 2.0 });
     }
 
+    // Returns the current map center, bounds, and a synthetic altitude value.
+    // Altitude is reverse-mapped from zoom level so the ViewModel can use
+    // altitude-based scope filtering (see GetStoriesByRegionUseCase.kt).
     function getCurrentView() {
         var center = map.getCenter();
         var bounds = map.getBounds();

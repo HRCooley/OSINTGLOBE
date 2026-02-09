@@ -32,6 +32,27 @@ import okhttp3.Request
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Central news aggregation repository. Fetches stories from four concurrent
+ * sources (GDELT, GNews, NewsAPI, RSS) and applies deduplication, caching,
+ * and geographic filtering.
+ *
+ * Data flow:
+ * 1. Emit cached stories from Room (immediate, no network)
+ * 2. Fetch fresh stories from all sources concurrently via coroutineScope/async
+ * 3. Deduplicate by URL normalization + Jaccard title similarity (85% threshold)
+ * 4. Cache with scope-based TTLs and clean up expired entries
+ * 5. Fall back to embedded JSON (fallback_news.json) if all sources fail
+ *
+ * Geographic filtering:
+ * - GDELT: uses "near:lat,lon within:500km" geographic query
+ * - GNews/NewsAPI: country code derived from map center via bounding-box lookup
+ * - RSS: feeds filtered by whether their coordinates are within view bounds
+ *
+ * Rate limiting:
+ * - GNews and NewsAPI are limited to 100 requests per 24-hour sliding window
+ * - Tracked via [RateLimitDao] in the Room database
+ */
 @Singleton
 class NewsRepositoryImpl @Inject constructor(
     private val storyDao: StoryDao,
@@ -106,6 +127,12 @@ class NewsRepositoryImpl @Inject constructor(
         }
     }
 
+    /**
+     * Fetches stories from all four sources concurrently. Each source runs in
+     * its own async coroutine so network latency is parallelized. Individual
+     * source failures are caught and return empty lists — the aggregator never
+     * fails entirely unless all sources fail.
+     */
     private suspend fun fetchFromAllSources(
         bounds: GeoBounds,
         scopes: Set<EditorialScope>
@@ -351,6 +378,16 @@ class NewsRepositoryImpl @Inject constructor(
     )
 
     companion object {
+        /**
+         * Two-pass deduplication:
+         * 1. URL-based — stories with the same normalized URL are merged
+         * 2. Title-based — stories with >85% Jaccard similarity published
+         *    within the same hour are considered duplicates (catches same-event
+         *    coverage from different outlets with different URLs)
+         *
+         * Merged stories combine source attributions and fill in missing fields
+         * (summary, image, sentiment) from the duplicate.
+         */
         fun deduplicateStories(stories: List<NewsStory>): List<NewsStory> {
             val seen = mutableMapOf<String, NewsStory>()
             val result = mutableListOf<NewsStory>()

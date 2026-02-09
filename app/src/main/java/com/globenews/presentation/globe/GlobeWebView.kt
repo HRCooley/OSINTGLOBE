@@ -16,6 +16,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 
+/**
+ * Current map viewing state, reported by Leaflet on every camera move.
+ * [altitude] is a synthetic value reverse-mapped from Leaflet's zoom level
+ * (see globe.html getCurrentView()) so the ViewModel can apply altitude-based
+ * editorial scope filtering without knowing about Leaflet internals.
+ */
 data class GlobeViewState(
     val lat: Double = 0.0,
     val lon: Double = 0.0,
@@ -26,6 +32,21 @@ data class GlobeViewState(
     val west: Double = -180.0
 )
 
+/**
+ * Composable that hosts the Leaflet.js map inside an Android WebView.
+ *
+ * The WebView loads `globe.html` from the app's assets directory and exposes
+ * an [AndroidBridgeInterface] to JavaScript as `window.AndroidBridge`. This
+ * enables bidirectional communication between the Leaflet map and the Kotlin
+ * presentation layer.
+ *
+ * Note: The [cesiumToken] parameter is a legacy holdover from the CesiumJS
+ * implementation. It's still passed through the bridge interface but is no
+ * longer used by the Leaflet-based globe.html.
+ *
+ * WebView settings enable mixed content mode (ALWAYS_ALLOW) because globe.html
+ * is loaded via file:// but fetches Leaflet CSS/JS from CDN over HTTPS.
+ */
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun GlobeWebView(
@@ -111,6 +132,13 @@ fun GlobeWebView(
     )
 }
 
+/**
+ * JavaScript interface exposed to the WebView as `window.AndroidBridge`.
+ * Called from globe.html to notify the app of map events:
+ * - [onReady]: Map initialization complete, safe to push markers
+ * - [onMarkerTap]: User tapped a story marker or cluster list item
+ * - [onCameraMove]: User panned/zoomed — includes center, bounds, and altitude
+ */
 class AndroidBridgeInterface(
     private val cesiumToken: String,
     private val onReady: () -> Unit,

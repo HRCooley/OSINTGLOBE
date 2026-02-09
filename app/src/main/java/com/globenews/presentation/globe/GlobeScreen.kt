@@ -45,6 +45,21 @@ import com.globenews.domain.model.EditorialScope
 import com.globenews.presentation.search.SearchBar
 import com.globenews.presentation.storydetail.StoryDetailSheet
 
+/**
+ * Main screen of the app — a full-screen interactive map with overlaid controls.
+ *
+ * Layout structure (layered in a Box):
+ * 1. [GlobeWebView] — Leaflet.js map filling the entire screen
+ * 2. Floating top bar — search bar + settings/bookmarks icons
+ * 3. Loading indicator — shown while fetching stories
+ * 4. Bottom-left — editorial scope filter chips (Intl/Natl/Regional/Local)
+ * 5. Bottom-right — tile layer toggle (Dark/Satellite/Street)
+ * 6. [ModalBottomSheet] — story detail sheet (shown when a marker is tapped)
+ *
+ * Stories are pushed to the map via [GlobeBridge.addMarkers] whenever
+ * [GlobeUiState.stories] changes. The JavaScript side handles incremental
+ * diffing so we don't need to call clearMarkers() first.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GlobeScreen(
