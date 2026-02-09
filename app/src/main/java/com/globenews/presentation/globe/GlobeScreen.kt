@@ -62,7 +62,7 @@ fun GlobeScreen(
     LaunchedEffect(uiState.stories, uiState.globeReady) {
         if (uiState.globeReady) {
             globeBridge.value?.clearMarkers()
-            globeBridge.value?.addMarkers(uiState.stories)
+            globeBridge.value?.addMarkers(uiState.stories, uiState.currentView.altitude)
         }
     }
 
@@ -136,6 +136,22 @@ fun GlobeScreen(
                     Icon(Icons.Default.Bookmark, "Bookmarks", tint = Color.White)
                 }
             }
+        }
+
+        // Story count badge - top right
+        if (uiState.stories.isNotEmpty()) {
+            Text(
+                text = "${uiState.stories.size} stories",
+                color = Color.White.copy(alpha = 0.85f),
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .statusBarsPadding()
+                    .padding(top = 56.dp, end = 12.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color.Black.copy(alpha = 0.5f))
+                    .padding(horizontal = 10.dp, vertical = 4.dp)
+            )
         }
 
         // Loading indicator

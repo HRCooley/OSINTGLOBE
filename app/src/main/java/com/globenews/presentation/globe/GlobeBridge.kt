@@ -1,15 +1,17 @@
 package com.globenews.presentation.globe
 
 import android.webkit.WebView
+import com.globenews.core.common.Constants
 import com.globenews.domain.model.NewsStory
 import org.json.JSONArray
 import org.json.JSONObject
 
 class GlobeBridge(private var webView: WebView?) {
 
-    fun addMarkers(stories: List<NewsStory>) {
+    fun addMarkers(stories: List<NewsStory>, altitudeKm: Double = 20000.0) {
+        val maxMarkers = markerLimitForAltitude(altitudeKm)
         val jsonArray = JSONArray()
-        stories.take(500).forEach { story ->
+        stories.take(maxMarkers).forEach { story ->
             val obj = JSONObject().apply {
                 put("id", story.id)
                 put("lat", story.location.latitude)
@@ -42,6 +44,14 @@ class GlobeBridge(private var webView: WebView?) {
 
     fun release() {
         webView = null
+    }
+
+    private fun markerLimitForAltitude(altitudeKm: Double): Int {
+        return when {
+            altitudeKm > 8_000 -> Constants.MAX_VISIBLE_MARKERS_HIGH_ALT
+            altitudeKm > 1_000 -> Constants.MAX_VISIBLE_MARKERS_MID_ALT
+            else -> Constants.MAX_VISIBLE_MARKERS_LOW_ALT
+        }
     }
 
     private fun evaluateJs(script: String) {

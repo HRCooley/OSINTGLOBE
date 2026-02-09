@@ -14,6 +14,9 @@ object Constants {
     const val SEARCH_DEBOUNCE_MS = 300L
 
     const val MAX_VISIBLE_MARKERS = 500
+    const val MAX_VISIBLE_MARKERS_HIGH_ALT = 1000
+    const val MAX_VISIBLE_MARKERS_MID_ALT = 750
+    const val MAX_VISIBLE_MARKERS_LOW_ALT = 500
 
     const val CACHE_TTL_INTERNATIONAL_HOURS = 24L
     const val CACHE_TTL_NATIONAL_HOURS = 12L
